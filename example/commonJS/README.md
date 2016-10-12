@@ -1,9 +1,13 @@
 
 ### 需要借助 browserify 来模拟 commonjs 风格的代码
 
-### 全局安装
+### 全局安装(可以能需要sudo)
 
-  npm install -g browserify
+  npm install -g browserify  
+
+  或者  
+
+  sudo npm install -g browserify 
   
 ### 编译
 
