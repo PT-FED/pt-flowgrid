@@ -1,21 +1,25 @@
 'use strict';
 /**
- *  可拖拽流式布局
- *      原则和思路:  通过指定classname进行配置, 实现view层的拖拽, 与数据,业务,请求等都毫无关联. 最好只和css打交道.
- *      兼容性: ie9+
- *      说明: 与HTML5的原生拖拽毫无关系(兼容性差,顾不采用), 事件机制参考了HTML5原生拖拽事件名.
- *      支持: AMD和CMD, 
- *      使用: 第一种: pt.flowgrid({配置}); 第二种: pt.flowgrid([数据]); 第三种: pt.flowgrid({配置},[数据]);
+ * Copyright (c) 2016 tm-roamer
+ * https://github.com/PT-FED/pt-flowgrid
+ * version: 1.0.1
+ * 描述: 可拖拽流式布局
+ * 原则和思路:  通过指定classname进行配置, 实现view层的拖拽, 与数据,业务,请求等都毫无关联. 最好只和css打交道.
+ * 兼容性: ie9+
+ * 说明: 与HTML5的原生拖拽毫无关系(兼容性差,顾不采用), 事件机制参考了HTML5原生拖拽事件名.
+ * 支持: AMD和CMD, 
  */
-(function (fun) {
+(function (parent, fun) {
     if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
         module.exports = fun();
     } else if (typeof define === 'function' && typeof define.amd === 'object') {
         define(fun);
+    } else if (typeof define === 'function' && typeof define.cmd === 'object') {
+        define(fun);
     } else {
-        fun();
+        parent.flowgrid = fun();
     }
-})(function () {
+})(window.pt || window, function (flowgrid) {
 
     // 常量
     var THROTTLE_TIME = 12;                                // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
@@ -684,7 +688,7 @@
         return (grid = cache[0]);
     }
 
-    var flowgrid = {
+    flowgrid = {
         version: "1.0.1",
         instance: instance
     };
