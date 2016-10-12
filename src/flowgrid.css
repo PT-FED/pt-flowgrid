@@ -1,0 +1,53 @@
+@charset "UTF-8";
+.pt-flowgrid-container {
+    position: relative;
+    z-index: 1;
+}
+.pt-flowgrid-item {
+    position: absolute;
+}
+.pt-flowgrid-item-zoom {
+    content: "";
+    position: absolute;
+    bottom: -32px;
+    right: -32px;
+    height: 32px;
+    width: 32px;
+    transform: rotate(45deg);
+    background: #84d943;
+    cursor: se-resize;
+    transition: right 0.3s, bottom 0.3s;
+    /*visibility: hidden;
+    bottom: -16px;
+    right: -16px;*/
+}
+.pt-flowgrid-item-inner {
+    background-color: white;
+    position: absolute;
+    top:5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    overflow: hidden;
+}
+.pt-flowgrid-item-inner:hover .pt-flowgrid-item-zoom {
+    bottom: -16px;
+    right: -16px;
+    /*visibility: visible;*/
+}
+.pt-flowgrid-item-dragdrop .pt-flowgrid-item-inner .pt-flowgrid-item-zoom {
+    bottom: -32px;
+    right: -32px;
+}
+.pt-flowgrid-item-dragdrop .pt-flowgrid-item-inner {
+    box-shadow: 2px 2px 2px rgba(144,142,142,0.6);
+    opacity: 0.8; 
+    z-index: 2147483647;
+}
+.pt-flowgrid-item[data-fg-id="placeholder"] .pt-flowgrid-item-inner {
+    background: transparent;
+    border: 1px dashed lightgray;
+}
+.pt-flowgrid-item-animate {
+    transition: transform 0.3s, left 0.3s, top 0.3s, height 0.3s, width 0.3s;
+}
