@@ -1,7 +1,7 @@
 
 ### 需要借助 browserify 来模拟 commonjs 风格的代码
 
-### 全局安装(可以能需要sudo)
+### 全局安装(可能需要sudo权限)
 
   npm install -g browserify  
 
