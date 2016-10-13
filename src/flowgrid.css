@@ -2,8 +2,12 @@
 .pt-flowgrid-container {
     position: relative;
     z-index: 1;
+    -webkit-user-select:none;
+    -moz-user-select:none;
 }
 .pt-flowgrid-item {
+    -webkit-user-select:none;
+    -moz-user-select:none;
     position: absolute;
 }
 .pt-flowgrid-item-zoom {
@@ -17,6 +21,7 @@
     background: #84d943;
     cursor: se-resize;
     transition: right 0.3s, bottom 0.3s;
+    z-index: 2147483647;
     /*visibility: hidden;
     bottom: -16px;
     right: -16px;*/
@@ -24,7 +29,7 @@
 .pt-flowgrid-item-inner {
     background-color: white;
     position: absolute;
-    top:5px;
+    top: 5px;
     left: 5px;
     right: 5px;
     bottom: 5px;
@@ -45,8 +50,9 @@
     z-index: 2147483647;
 }
 .pt-flowgrid-item[data-fg-id="placeholder"] .pt-flowgrid-item-inner {
-    background: transparent;
-    border: 1px dashed lightgray;
+    background: #d3d3d3;
+    z-index: 1;
+    /*border: 1px dashed lightgray;*/
 }
 .pt-flowgrid-item-animate {
     transition: transform 0.3s, left 0.3s, top 0.3s, height 0.3s, width 0.3s;

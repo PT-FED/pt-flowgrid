@@ -4,10 +4,9 @@
  * https://github.com/PT-FED/pt-flowgrid
  * version: 1.0.1
  * 描述: 可拖拽流式布局
- * 原则和思路:  通过指定classname进行配置, 实现view层的拖拽, 与数据,业务,请求等都毫无关联. 最好只和css打交道.
+ * 原则和思路:  不依赖任何框架和类库, 通过指定classname进行配置, 实现view层的拖拽, 只和css打交道.
  * 兼容性: ie9+
- * 说明: 与HTML5的原生拖拽毫无关系(兼容性差,顾不采用), 事件机制参考了HTML5原生拖拽事件名.
- * 支持: AMD和CMD, 
+ * 支持: requirejs和commonjs和seajs, 
  */
 (function (parent, fun) {
     if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
@@ -41,14 +40,16 @@
     var THROTTLE_ID = undefined;                           // 节流函数的id
     var cache = {};                                        // 网格对象的缓存对象
     var grid = null;                                       // 当前缓存的网格对象
+    var fun = function(){}                                 // 临时空方法
 
     // 默认设置
     var setting = {
+        container: null,
         flow: true,
         row: 7,
         col: 12,
-        cellminW: 4,
-        cellminH: 4,
+        cellMinW: 4,
+        cellMinH: 4,
         cellScale: {
             w: 16,
             h: 9
@@ -59,7 +60,12 @@
             w: 4,
             h: 4
         },
-        container: null
+        onDragStart:fun,
+        onDragEnd:fun,
+        onResizeStart:fun,
+        onResizeEnd:fun,
+        onAddNode:fun,
+        onDeleteNode:fun,
     };
 
     // 属性拷贝
@@ -91,6 +97,27 @@
             return false;
         };
         throttle(now);
+    }
+
+    // 异步执行回调
+    function async(ck) {
+        setTimeout(function() {
+            ck && typeof ck === 'function' && ck();
+        }, 0);
+    }
+
+    // 构建节点
+    function buildNode(n, id, opt) {
+        var node = {
+            id: n.id || id,
+            x: n.x,
+            y: n.y,
+            w: n.w,
+            h: n.h,
+            minW: n.minW || opt.cellMinW,
+            minH: n.minH || opt.cellMinH,
+        };
+        return node;
     }
 
     // 事件处理对象
@@ -126,15 +153,23 @@
             var node = view.find(event.target, GRID_ITEM);
             if (node) {
                 dragdrop.dragstart(event, node);
+                async(function() {
+                    dragdrop.isResize ? grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
+                    : grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);    
+                })
             }
         },
         mousemove: function (event) {
-            if (dragdrop.isdrag) {
+            if (dragdrop.isDrag) {
                 throttle(new Date().getTime()) && dragdrop.drag(event);
             }
         },
         mouseup: function (event) {
-            if (dragdrop.isdrag) {
+            if (dragdrop.isDrag) {
+                async(function() {
+                    dragdrop.isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, dragdrop.dragNode) 
+                        : grid.opt.onDragEnd(event, dragdrop.dragElement, dragdrop.dragNode);
+                });
                 dragdrop.dragend(event);
             }
         },
@@ -144,19 +179,19 @@
 
     // 拖拽对象
     var dragdrop = {
-        isdrag: false,              // 是否正在拖拽
-        iszoom: false,              // 是否放大缩小
+        isDrag: false,              // 是否正在拖拽
+        isResize: false,            // 是否放大缩小
         dragNode: {                 // 拖拽节点的的关联数据
             id: undefined,          // 拖拽节点的id
             data: null,             // 占位符节点的关联数据
         },
         dragElement: null,          // 拖拽的dom节点
         dragstart: function(event, node) {
-            this.isdrag = true;
+            this.isDrag = true;
             this.dragElement = node;
             // 这句话不太好, 不严谨 ???
             if (event.target.className === GRID_ITEM_ZOOM) {
-                this.iszoom = true;
+                this.isResize = true;
             }
             // 取得容器和网格对象
             var container = view.find(node, GRID_CONTAINER);
@@ -193,8 +228,8 @@
             self.prevX = self.currentX;
             self.prevY = self.currentY;
             // 判断是不是放大缩小
-            if (this.iszoom) {
-                this.zoom(event, opt, dx, dy);
+            if (this.isResize) {
+                this.resize(event, opt, dx, dy);
             } else {
                 this.changeLocation(event, opt, dx, dy);
             }
@@ -224,7 +259,7 @@
                 grid.load();
             }
         },
-        zoom: function(event, opt, dx, dy) {
+        resize: function(event, opt, dx, dy) {
             var eleW = this.dragElement.clientWidth + dx,
                 eleH = this.dragElement.clientHeight + dy,
                 minW = opt.cellW_Int * this.dragNode.data.minW,
@@ -256,8 +291,8 @@
             // 清理临时样式(结束拖拽)
             this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_ANIMATE;
             // 清理临时变量
-            this.isdrag = false;
-            this.iszoom = false;
+            this.isDrag = false;
+            this.isResize = false;
             this.dragNode.id = undefined;
             this.dragNode.data = null;
             // 清理临时坐标
@@ -360,7 +395,7 @@
                         } else {
                             element = grid.elements[node.id] = this.create(node)
                             container.appendChild(element);
-                        }    
+                        }
                     }
                 }
             }
@@ -394,8 +429,10 @@
                 this.setData(originalData)
             } else {
                 var arr = view.dom2obj(container);
-                this.setData(arr, false);
-                view.render(this.data, container);
+                if (arr && arr.length > 0) {
+                    this.setData(arr);
+                    view.render(this.data, container);    
+                }
             }
             return this;
         },
@@ -404,7 +441,7 @@
                 var opt = this.opt,
                     area = this.area, 
                     data = this.data,
-                    max = this.max(data);
+                    max = this.getMaxRowAndCol(data);
                 this.sortData(data)
                     .buildArea(area, (max.y + max.h), opt.col)
                     .putData(area, data)
@@ -426,21 +463,14 @@
         setData: function(originalData, isload) {
             // 遍历原始数据
             if (originalData && Array.isArray(originalData)) {
-                var data = this.data,
-                    opt = this.opt;
                 this.originalData = originalData;
+                var opt = this.opt,
+                    data = this.data = [];
                 // 制作渲染数据
                 originalData.forEach(function(node, idx) {
-                    data[idx] = {
-                        id: idx,
-                        x: node.x,
-                        y: node.y,
-                        w: node.w,
-                        h: node.h,
-                        minW: node.minW || opt.cellminW,
-                        minH: node.minH || opt.cellminH,
-                    };
+                    data[idx] = buildNode(node, idx, opt);
                 });
+                // 再刷新
                 this.load(isload);
             }
             return this;
@@ -474,7 +504,7 @@
             return this;
         },
         // 取得区域中的最大行
-        max: function(data) {
+        getMaxRowAndCol: function(data) {
             var i, n, len, max = data[0];
             if (data && data.length > 1) {
                 for (i = 0, len = data.length; i < len; i++) {
@@ -488,29 +518,25 @@
         },
         add: function(n, isload) {
             var node,
+                opt = this.opt,
                 area = this.area,
                 data = this.data;
             if (n) {
-                node = {
-                    id: n.id || data.length,
-                    x: n.x,
-                    y: n.y,
-                    w: n.w,
-                    h: n.h,
-                    minW: node.minW || opt.cellminW,
-                    minH: node.minH || opt.cellminH,
-                };
+                node = buildNode(n, (n.id || data.length), opt);
                 this.checkIndexIsOutOf(area, node);
                 this.overlap(data, node);
             } else {
-                node = this.autoAdd(data, this.area, this.opt);
+                node = this.addAutoNode(data, area, opt);
             }
-            data[data.length] = node;
+            data[node.id] = node;
             this.load(isload);
+            async(function(){
+                this.opt.onAddNode(this.elements[node.id], node);    
+            })
             return node;
         },
-        // 自动扫描空位节点
-        autoAdd: function(data, area, opt) {
+        // 自动扫描空位添加节点
+        addAutoNode: function(data, area, opt) {
             var r, c, node = this.clone(opt.autoAddCell);
             node.id = data.length;
             for (r = 0; r < area.length; r = r + node.h ) {
@@ -539,18 +565,22 @@
             }
             return false;
         },
-        del: function(id, isload) {
+        delete: function(id, isload) {
             var data = this.data,
-                index = this.query(id).index;
-            data.splice(index, 1);
+                index = this.query(id).index,
+                arr = data.splice(index, 1);
+            view.remove(id);
+            delete this.elements[id];
             this.load(isload);
+            async(function(){
+                this.opt.onDeleteNode(grid.elements[id], arr[0]);
+            });
         },
         edit: function(n, isload) {
             var node = this.query(n.id).node;
-            node.x = n.x;
-            node.y = n.y;
-            node.w = n.w;
-            node.h = n.h;
+            for(var k in n) {
+                node[k] = n[k];
+            }
             this.load(isload);
             return node;
         },
