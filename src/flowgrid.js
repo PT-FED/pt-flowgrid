@@ -48,8 +48,8 @@
         flow: true,
         row: 7,
         col: 12,
-        cellMinW: 4,
-        cellMinH: 4,
+        cellMinW: 2,
+        cellMinH: 2,
         cellScale: {
             w: 16,
             h: 9
@@ -57,8 +57,8 @@
         autoAddCell: {
             x: 0,
             y: 0,
-            w: 4,
-            h: 4
+            w: 2,
+            h: 2
         },
         onDragStart:fun,
         onDragEnd:fun,

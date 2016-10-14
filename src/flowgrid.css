@@ -9,6 +9,7 @@
     -webkit-user-select:none;
     -moz-user-select:none;
     position: absolute;
+    z-index: 10;
 }
 .pt-flowgrid-item-zoom {
     content: "";
@@ -22,9 +23,6 @@
     cursor: se-resize;
     transition: right 0.3s, bottom 0.3s;
     z-index: 2147483647;
-    /*visibility: hidden;
-    bottom: -16px;
-    right: -16px;*/
 }
 .pt-flowgrid-item-inner {
     background-color: white;
@@ -38,21 +36,23 @@
 .pt-flowgrid-item-inner:hover .pt-flowgrid-item-zoom {
     bottom: -16px;
     right: -16px;
-    /*visibility: visible;*/
 }
 .pt-flowgrid-item-dragdrop .pt-flowgrid-item-inner .pt-flowgrid-item-zoom {
     bottom: -32px;
     right: -32px;
 }
+.pt-flowgrid-item.pt-flowgrid-item-dragdrop {
+    z-index: 2147483647;
+}
+.pt-flowgrid-item.pt-flowgrid-item[data-fg-id="placeholder"] {
+    z-index: 1;
+}
 .pt-flowgrid-item-dragdrop .pt-flowgrid-item-inner {
     box-shadow: 2px 2px 2px rgba(144,142,142,0.6);
     opacity: 0.8; 
-    z-index: 2147483647;
 }
 .pt-flowgrid-item[data-fg-id="placeholder"] .pt-flowgrid-item-inner {
-    background: #d3d3d3;
-    z-index: 1;
-    /*border: 1px dashed lightgray;*/
+    background-color: #d3d3d3;
 }
 .pt-flowgrid-item-animate {
     transition: transform 0.3s, left 0.3s, top 0.3s, height 0.3s, width 0.3s;
