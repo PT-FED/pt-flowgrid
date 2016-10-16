@@ -100,7 +100,7 @@
     }
 
     // 异步执行回调
-    function async(ck) {
+    function asyncFun(ck) {
         setTimeout(function() {
             ck && typeof ck === 'function' && ck();
         }, 0);
@@ -153,7 +153,7 @@
             var node = view.find(event.target, GRID_ITEM);
             if (node) {
                 dragdrop.dragstart(event, node);
-                async(function() {
+                asyncFun(function() {
                     dragdrop.isResize ? grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
                     : grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);    
                 })
@@ -166,7 +166,7 @@
         },
         mouseup: function (event) {
             if (dragdrop.isDrag) {
-                async(function() {
+                asyncFun(function() {
                     dragdrop.isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, dragdrop.dragNode) 
                         : grid.opt.onDragEnd(event, dragdrop.dragElement, dragdrop.dragNode);
                 });
@@ -221,7 +221,7 @@
             // 计算位移
             var dx = self.currentX - self.prevX;
             var dy = self.currentY - self.prevY;
-            // 触发机制
+            // 触发机制 (优化, 减少触发次数)
             // console.log('dx='+dx+',dy='+dy);
             if ( (-2 < dx && dx < 2) && (-2 < dy && dy < 2) ) return;
             // 当前坐标变成上一次的坐标
@@ -239,23 +239,22 @@
                 cellH_Int = opt.cellH_Int;
             // 相对父元素的坐标x,y
             var translate = this.dragElement.style.transform;
-            var value = translate.replace(/translate.*\(/ig, '').replace(/\).*$/ig, '').split(',');
-            var translateX = parseInt(value[0]);
-            var translateY = parseInt(value[1]);
+            var value = translate.replace(/translate.*\(/ig, '').replace(/\).*$/ig, '').replace(/px/ig, '').split(',');
+            var translateX = value[0]*1;
+            var translateY = value[1]*1;
             // 计算坐标
             this.dragElement.style.cssText += ';transform: translate(' + (translateX + dx) + 'px,' + (translateY + dy) + 'px);';
             // 当前拖拽节点的坐标, 转换成对齐网格的坐标
             var nodeX = Math.round(translateX / cellW_Int);
-            var nodeY = Math.round(translateY / cellH_Int);
+            // (优化) 变换位置更流畅, dy > 0 是下移
+            var nodeY = dy > 0 ? Math.ceil(translateY / cellH_Int) : Math.floor(translateY / cellH_Int);
             // 判断坐标是否变化
             if (this.dragNode.data.x !== nodeX || this.dragNode.data.y !== nodeY) {
-                
                 grid.clearNodeInArea(grid.area, this.dragNode.data);
                 this.dragNode.data.x = nodeX;
                 this.dragNode.data.y = nodeY;
-                
                 grid.checkIndexIsOutOf(grid.area, this.dragNode.data);
-                grid.overlap(grid.data, this.dragNode.data);
+                grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
                 grid.load();
             }
         },
@@ -264,8 +263,8 @@
                 eleH = this.dragElement.clientHeight + dy,
                 minW = opt.cellW_Int * this.dragNode.data.minW,
                 minH = opt.cellH_Int * this.dragNode.data.minH,
-                nodeW = Math.round(eleW / opt.cellW_Int),
-                nodeH = Math.round(eleH / opt.cellH_Int);
+                nodeW = Math.ceil(eleW / opt.cellW_Int),
+                nodeH = Math.ceil(eleH / opt.cellH_Int);
             // 计算最小尺寸
             eleW < minW && (eleW = minW);
             eleH < minH && (eleH = minH);
@@ -273,13 +272,11 @@
             this.dragElement.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
             if (this.dragNode.data.w !== nodeW || this.dragNode.data.h !== nodeH) {
-                
                 grid.clearNodeInArea(grid.area, this.dragNode.data);
                 this.dragNode.data.w = nodeW;
                 this.dragNode.data.h = nodeH;
-                
                 grid.checkIndexIsOutOf(grid.area, this.dragNode.data);
-                grid.overlap(grid.data, this.dragNode.data);
+                grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
                 grid.load();
             }
         },
@@ -452,7 +449,7 @@
         },
         // 计算最小网格, 根据 16: 9 计算得出高
         computeCellScale: function(opt) {
-            opt.containerW = opt.container.scrollWidth;
+            opt.containerW = opt.container.clientWidth;
             opt.cellW = opt.containerW / opt.col;
             opt.cellH = opt.cellW / opt.cellScale.w * opt.cellScale.h; 
             opt.cellW_Int = Math.floor(opt.cellW);
@@ -477,7 +474,8 @@
         },
         sortData: function(data) {
             data.sort(function(a, b) {
-                return a.y - b.y;
+                var y = a.y - b.y
+                return y === 0 ? a.x - b.x : y;
             });
             return this;  
         },
@@ -530,7 +528,7 @@
             }
             data[node.id] = node;
             this.load(isload);
-            async(function(){
+            asyncFun(function(){
                 this.opt.onAddNode(this.elements[node.id], node);    
             })
             return node;
@@ -572,7 +570,7 @@
             view.remove(id);
             delete this.elements[id];
             this.load(isload);
-            async(function(){
+            asyncFun(function(){
                 this.opt.onDeleteNode(grid.elements[id], arr[0]);
             });
         },
@@ -606,40 +604,53 @@
             return this;
         },
         // 节点重叠
-        overlap: function(data, node) {
-            var i, len, n, 
-                cursor = node.y, 
-                offset = 0, 
-                isUp = true;
+        overlap: function(data, node, dx, dy, isResize) {
+            var i, n, len,
+                dx = dx || 0,
+                dy = dy || 0,
+                nodeY = node.y,
+                nodeH = node.h,
+                isDown = false,
+                offsetY = 0,
+                isResize = isResize || false
+            var count = 0;
             // 找到重叠的点
-            for (i = 0, len = data.length; i < len; i++) {
-                n = data[i];
-                if (n !== node) {
-                    // 碰撞检测
-                    if ( n.x <= node.x && node.x < n.x + n.w && n.y <= node.y && node.y < n.y + n.h ) {
-                        // 判断插入点应该上移还是下移, 通过重叠点的中间值h/2来判断
-                        var median = n.h / 2 < 1 ? 1 : Math.floor(n.h / 2);
-                        // 计算差值, 与中间值比较
-                        var difference = node.y - n.y;
-                        // 大于中间值, 下移, 求出偏移量
-                        if( difference >= median ) {
-                            isUp = false;
-                            offset = n.y + n.h - node.y;
+            if (!isResize) {
+                for (i = 0, len = data.length; i < len; i++) {
+                    n = data[i];
+                    if (n !== node) {
+                        // 碰撞检测
+                        if ( n.x <= node.x && node.x < n.x + n.w && n.y <= node.y && node.y < n.y + n.h ) {
+                            // 判断插入点应该上移还是下移, 通过重叠点的中间值h/2来判断
+                            var median = n.h / 2 < 1 ? 1 : Math.floor(n.h / 2);
+                            // 计算差值, 与中间值比较, dy > 0 下移, 拿y+h来和中间值比较
+                            var difference = dy > 0 ? node.y + node.h - n.y : node.y - n.y;
+                            // 大于中间值, 下移, 求出偏移量
+                            if( difference >= median ) {
+                                isDown = true;
+                                var val = n.y + n.h - node.y;
+                                offsetY = val > offsetY ? val : offsetY;
+                            }
+                            console.log('dy='+dy+',node.y='+node.y+',node.h='+node.h+',n.y='+n.y+',n.h='+n.h
+                                +',difference='+difference+',median='+median+',offsetY='+offsetY
+                                +',i='+i+',count='+(++count));
                         }
                     }
                 }
+            }
+            count = 0;
+            if (offsetY===3) {
+                // debugger;
             }
             // 计算y值, 插入节点
             for (i = 0, len = data.length; i < len; i++) {
                 n = data[i];
                 if (n !== node) {
-                    // 比较坐标, 比插入节点y值大的节点, 统一下移
-                    if ( n.y >= cursor ) {
-                        n.y = n.y + node.h + offset;
+                    if ( n.y >= nodeY ) {
+                        n.y = n.y + nodeH + offsetY;
                     }
-                    // 或 重叠的节点y值小于插入节点的情况, 下移
-                    else if ( n.y + n.h > cursor ) {
-                        isUp ? (n.y = cursor + node.h) : (node.y = n.y + n.h);
+                    else if ( n.y + n.h > nodeY ) {
+                        isDown ? (node.y = n.y + n.h > node.y ? n.y + n.h : node.y) : (n.y = nodeY + nodeH);
                     }
                 }
             }
