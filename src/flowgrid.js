@@ -154,8 +154,8 @@
             if (node) {
                 dragdrop.dragstart(event, node);
                 asyncFun(function() {
-                    dragdrop.isResize ? grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
-                    : grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);    
+                    dragdrop.isResize ? grid.opt.onResizeStart && grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
+                    : grid.opt.onDragStart && grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);    
                 })
             }
         },
@@ -167,8 +167,8 @@
         mouseup: function (event) {
             if (dragdrop.isDrag) {
                 asyncFun(function() {
-                    dragdrop.isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, dragdrop.dragNode) 
-                        : grid.opt.onDragEnd(event, dragdrop.dragElement, dragdrop.dragNode);
+                    dragdrop.isResize ? grid.opt.onResizeEnd && grid.opt.onResizeEnd(event, dragdrop.dragElement, dragdrop.dragNode) 
+                        : grid.opt.onDragEnd && grid.opt.onDragEnd(event, dragdrop.dragElement, dragdrop.dragNode);
                 });
                 dragdrop.dragend(event);
             }
@@ -267,8 +267,8 @@
                 nodeW = Math.ceil(eleW / opt.cellW_Int),
                 nodeH = Math.ceil(eleH / opt.cellH_Int);
             // 计算最小尺寸
-            eleW < minW && (eleW = minW);
-            eleH < minH && (eleH = minH);
+            eleW < minW && (eleW = minW*0.9);
+            eleH < minH && (eleH = minH*0.9);
             // 设置宽高
             this.dragElement.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
@@ -517,6 +517,7 @@
         },
         add: function(n, isload) {
             var node,
+                self = this,
                 opt = this.opt,
                 area = this.area,
                 data = this.data;
@@ -530,7 +531,7 @@
             data[node.id] = node;
             this.load(isload);
             asyncFun(function(){
-                this.opt.onAddNode(this.elements[node.id], node);    
+                self.opt.onAddNode && self.opt.onAddNode(self.elements[node.id], node);    
             })
             return node;
         },
@@ -565,14 +566,15 @@
             return false;
         },
         delete: function(id, isload) {
-            var data = this.data,
+            var self = this,
+                data = this.data,
                 index = this.query(id).index,
                 arr = data.splice(index, 1);
             view.remove(id);
             delete this.elements[id];
             this.load(isload);
             asyncFun(function(){
-                this.opt.onDeleteNode(grid.elements[id], arr[0]);
+                self.opt.onDeleteNode && self.opt.onDeleteNode(self.elements[id], arr[0]);
             });
         },
         edit: function(n, isload) {
@@ -619,51 +621,55 @@
             var i, n, len,
                 dx = dx || 0,
                 dy = dy || 0,
-                nodeY = node.y,
-                nodeH = node.h,
-                isDown = false,
-                offsetY = 0,
+                offsetNode = null,
+                offsetUnderY = 0,
+                offsetUpY = 0,
                 isResize = isResize || false,
                 checkHit = this.checkHit;
             // 找到重叠的点
+            // var count = 0;
+            // 向下插入节点
             if (!isResize) {
                 for (i = 0, len = data.length; i < len; i++) {
                     n = data[i];
-                    if (n !== node) {
-                        // 碰撞检测
-                        if ( checkHit(n, node) ) {
-                            // 判断插入点应该上移还是下移, 通过重叠点的中间值h/2来判断
-                            var median = n.h / 2 < 1 ? 1 : Math.floor(n.h / 2);
-                            // 计算差值, 与中间值比较, dy > 2 下移(2是优化, 防止平移上下震动), 拿y+h来和中间值比较
-                            var difference = dy > 2 ? node.y + node.h - n.y : node.y - n.y;
-                            // 大于中间值, 下移, 求出偏移量
-                            if( difference > median ) {
-                                isDown = true;
-                                var val = n.y + n.h - node.y;
-                                offsetY = val > offsetY ? val : offsetY;
-                            }
+                    if (n !== node && checkHit(n, node) ) {
+                        var val = n.y + n.h - node.y;
+                        if ( val > offsetUnderY ) {
+                            offsetUnderY = val;
+                            offsetNode = n;
                         }
+                        // console.log('dx='+dx+',dy='+dy+',node.y='+node.y+',node.h='+node.h+',n.id='+n.id+',n.y='+n.y+',n.h='+n.h
+                        //     );
                     }
                 }
+                if (offsetNode) {
+                    // 判断插入点应该上移还是下移, 通过重叠点的中间值h/2来判断
+                    var median = offsetNode.h / 2 < 1 ? 1 : Math.floor(offsetNode.h / 2);
+                    // 计算差值, 与中间值比较, dy > 2 下移(2是优化, 防止平移上下震动), 拿y+h来和中间值比较
+                    var difference = dy >= 2 ? node.y + node.h - offsetNode.y : node.y - offsetNode.y;
+                    // 大于中间值, 求出下面那部分截断的偏移量, 等于是怕上下顺序连续的块,会错过互换位置
+                    if ( difference >= median ) {
+                        node.y = node.y + offsetUnderY;
+                    }
+                    // console.log('******,difference='+difference+',median='+median+',offsetUnderY='+offsetUnderY
+                    //         +',i='+i+',count='+(++count));
+                }
             }
-            // 计算y值, 插入节点
+            // count = 0;
+            // 向上插入节点
+            for (i = 0, len = data.length; i < len; i++) {
+                n = data[i];
+                if (n !== node && checkHit(n, node)) {
+                    var val = node.y - n.y;
+                    offsetUpY = val > offsetUpY ? val : offsetUpY;
+                }
+            }
+            // 重新计算y值
             for (i = 0, len = data.length; i < len; i++) {
                 n = data[i];
                 if (n !== node) {
-                    if (isDown) {
-                        if ( n.y >= nodeY + nodeH ) {
-                            n.y = n.y + nodeH + offsetY;
-                        }
-                        else if ( n.y + n.h >= nodeY || n.y + n.h >= nodeY + nodeH) {
-                            node.y = n.y + n.h
-                        }
-                    } else {
-                        if ( n.y >= nodeY ) {
-                            n.y = n.y + nodeH;
-                        }
-                        else if ( n.y + n.h > nodeY ) {
-                            n.y = nodeY + nodeH;
-                        }
+                    if ( (n.y < node.y && node.y < n.y + n.h) || node.y <= n.y ) {
+                        n.y = n.y + node.h + offsetUpY;
                     }
                 }
             }
