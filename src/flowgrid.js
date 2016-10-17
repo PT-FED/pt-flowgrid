@@ -247,7 +247,8 @@
             // 当前拖拽节点的坐标, 转换成对齐网格的坐标
             var nodeX = Math.round(translateX / cellW_Int);
             // (优化) 变换位置更流畅, dy > 0 是下移
-            var nodeY = dy > 0 ? Math.ceil(translateY / cellH_Int) : Math.floor(translateY / cellH_Int);
+            // var nodeY = dy > 0 ? Math.floor(translateY / cellH_Int) : Math.ceil(translateY / cellH_Int);
+            var nodeY = Math.round(translateY / cellH_Int);
             // 判断坐标是否变化
             if (this.dragNode.data.x !== nodeX || this.dragNode.data.y !== nodeY) {
                 grid.clearNodeInArea(grid.area, this.dragNode.data);
@@ -603,6 +604,16 @@
             node.x + node.w > col && (node.x = col - node.w);
             return this;
         },
+        // 检测矩形碰撞
+        checkHit: function(n, node) {
+            var result = false;
+            if ( (n.x + n.w > node.x) && (n.x < node.x + node.w) ) {
+                if ( (n.y + n.h > node.y) && (n.y < node.y + node.h) ) {
+                    result = true;
+                }
+            }
+            return result;
+        },
         // 节点重叠
         overlap: function(data, node, dx, dy, isResize) {
             var i, n, len,
@@ -612,45 +623,47 @@
                 nodeH = node.h,
                 isDown = false,
                 offsetY = 0,
-                isResize = isResize || false
-            var count = 0;
+                isResize = isResize || false,
+                checkHit = this.checkHit;
             // 找到重叠的点
             if (!isResize) {
                 for (i = 0, len = data.length; i < len; i++) {
                     n = data[i];
                     if (n !== node) {
                         // 碰撞检测
-                        if ( n.x <= node.x && node.x < n.x + n.w && n.y <= node.y && node.y < n.y + n.h ) {
+                        if ( checkHit(n, node) ) {
                             // 判断插入点应该上移还是下移, 通过重叠点的中间值h/2来判断
                             var median = n.h / 2 < 1 ? 1 : Math.floor(n.h / 2);
-                            // 计算差值, 与中间值比较, dy > 0 下移, 拿y+h来和中间值比较
-                            var difference = dy > 0 ? node.y + node.h - n.y : node.y - n.y;
+                            // 计算差值, 与中间值比较, dy > 2 下移(2是优化, 防止平移上下震动), 拿y+h来和中间值比较
+                            var difference = dy > 2 ? node.y + node.h - n.y : node.y - n.y;
                             // 大于中间值, 下移, 求出偏移量
-                            if( difference >= median ) {
+                            if( difference > median ) {
                                 isDown = true;
                                 var val = n.y + n.h - node.y;
                                 offsetY = val > offsetY ? val : offsetY;
                             }
-                            console.log('dy='+dy+',node.y='+node.y+',node.h='+node.h+',n.y='+n.y+',n.h='+n.h
-                                +',difference='+difference+',median='+median+',offsetY='+offsetY
-                                +',i='+i+',count='+(++count));
                         }
                     }
                 }
-            }
-            count = 0;
-            if (offsetY===3) {
-                // debugger;
             }
             // 计算y值, 插入节点
             for (i = 0, len = data.length; i < len; i++) {
                 n = data[i];
                 if (n !== node) {
-                    if ( n.y >= nodeY ) {
-                        n.y = n.y + nodeH + offsetY;
-                    }
-                    else if ( n.y + n.h > nodeY ) {
-                        isDown ? (node.y = n.y + n.h > node.y ? n.y + n.h : node.y) : (n.y = nodeY + nodeH);
+                    if (isDown) {
+                        if ( n.y >= nodeY + nodeH ) {
+                            n.y = n.y + nodeH + offsetY;
+                        }
+                        else if ( n.y + n.h >= nodeY || n.y + n.h >= nodeY + nodeH) {
+                            node.y = n.y + n.h
+                        }
+                    } else {
+                        if ( n.y >= nodeY ) {
+                            n.y = n.y + nodeH;
+                        }
+                        else if ( n.y + n.h > nodeY ) {
+                            n.y = nodeY + nodeH;
+                        }
                     }
                 }
             }

@@ -55,6 +55,9 @@
 .pt-flowgrid-item[data-fg-id="placeholder"] .pt-flowgrid-item-inner {
     background-color: #d3d3d3;
 }
+.pt-flowgrid-item[data-fg-id="placeholder"].pt-flowgrid-item-animate {
+    transition: transform 0.2s, left 0.2s, top 0.2s, height 0.2s, width 0.2s;
+}
 .pt-flowgrid-item-animate {
-    transition: transform 0.25s, left 0.25s, top 0.25s, height 0.15s, width 0.15s;
+    transition: transform 0.25s, left 0.25s, top 0.25s, height 0.2s, width 0.2s;
 }
