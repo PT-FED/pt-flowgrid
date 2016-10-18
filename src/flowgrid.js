@@ -131,22 +131,20 @@
         },
         // 绑定监听
         bindEvent: function() {
-            var body = this.body;
-            body.addEventListener('mousedown', this.mousedown , false);
-            body.addEventListener('mousemove', this.mousemove, false);
-            // body.addEventListener('mouseout', this.mouseout, false);
-            // body.addEventListener('mouseover', this.mouseover, false);
-            body.addEventListener('mouseup', this.mouseup, false);
+            document.addEventListener('mousedown', this.mousedown , false);
+            document.addEventListener('mousemove', this.mousemove, false);
+            // document.addEventListener('mouseout', this.mouseout, false);
+            // document.addEventListener('mouseover', this.mouseover, false);
+            document.addEventListener('mouseup', this.mouseup, false);
             this.isbind = true;
         },
         // 移除监听
         unbindEvent: function() {
-            var body = this.body;
-            body.removeEventListener('mousedown', this.mousedown, false);
-            body.removeEventListener('mousemove', this.mousemove, false);
-            // body.removeEventListener('mouseout', this.mouseout, false);
-            // body.removeEventListener('mouseover', this.mouseover, false);
-            body.removeEventListener('mouseup', this.mouseup, false);
+            document.removeEventListener('mousedown', this.mousedown, false);
+            document.removeEventListener('mousemove', this.mousemove, false);
+            // document.removeEventListener('mouseout', this.mouseout, false);
+            // document.removeEventListener('mouseover', this.mouseover, false);
+            document.removeEventListener('mouseup', this.mouseup, false);
             this.isbind = false;
         },
         mousedown: function(event) {
@@ -326,6 +324,11 @@
             }
             return arr;
         },
+        setContainerWH: function(container, width, height) {
+            var width = width && width+'px',
+                height = height && height+'px';
+            container && (container.style.cssText += ";width:"+width+';height:'+height+';');
+        },
         find: function(node, type) {
             if (node === handleEvent.body) return undefined;   // 向上递归到body就停
             var arr = node.className.split(' ');
@@ -439,11 +442,12 @@
                 var opt = this.opt,
                     area = this.area, 
                     data = this.data,
-                    max = this.getMaxRowAndCol(data);
+                    max = this.getMaxRowAndCol(opt, data);
                 this.sortData(data)
-                    .buildArea(area, (max.y + max.h), opt.col)
+                    .buildArea(area, max.row, max.col)
                     .putData(area, data)
                     .layout(area, data);
+                view.setContainerWH(opt.container, max.col * opt.cellW, max.row * opt.cellH);
                 view.render(data, opt.container);
             }
             return this;
@@ -502,14 +506,17 @@
             }
             return this;
         },
-        // 取得区域中的最大行
-        getMaxRowAndCol: function(data) {
-            var i, n, len, max = data[0];
+        // 取得区域中的最大行和列
+        getMaxRowAndCol: function(opt, data) {
+            var i, n, len, max = {row: opt.row, col: opt.col};
             if (data && data.length > 1) {
                 for (i = 0, len = data.length; i < len; i++) {
                     n = data[i];
-                    if (n.y + n.h > max.y + max.h) {
-                        max = n;
+                    if (n.y + n.h > max.row) {
+                        max.row = n.y + n.h;
+                    }
+                    if (n.x + n.w > max.col) {
+                        max.col = n.x + n.w;
                     }
                 }
             }
@@ -598,12 +605,12 @@
         },
         // 处理脏数据
         checkIndexIsOutOf: function(area, node) {
-            var row = area.length,
-                col = (area[0] && area[0].length) || this.opt.col;
+            // var row = area.length,
+                // col = (area[0] && area[0].length) || this.opt.col;
             // 数组下标越界检查
             node.x < 0 && (node.x = 0);
             node.y < 0 && (node.y = 0);
-            node.x + node.w > col && (node.x = col - node.w);
+            // node.x + node.w > col && (node.x = col - node.w);
             return this;
         },
         // 检测矩形碰撞
@@ -628,7 +635,7 @@
                 checkHit = this.checkHit;
             // 找到重叠的点
             // var count = 0;
-            // 向下插入节点
+            // 向下, 向左, 向右插入节点
             if (!isResize) {
                 for (i = 0, len = data.length; i < len; i++) {
                     n = data[i];
