@@ -4,6 +4,7 @@
     z-index: 1;
     -webkit-user-select:none;
     -moz-user-select:none;
+    transition: height 0.2s, width 0.2s;
 }
 .pt-flowgrid-item {
     cursor: pointer;
