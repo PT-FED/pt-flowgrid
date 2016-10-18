@@ -47,6 +47,8 @@
     // 默认设置
     var setting = {
         container: null,
+        draggable: true, 
+        resizable: true,
         flow: true,
         row: 7,
         col: 12,
@@ -332,10 +334,12 @@
             }
             return arr;
         },
-        setContainerWH: function(container, width, height) {
-            var width = width && width+'px',
-                height = height && height+'px';
-            container && (container.style.cssText += ";width:"+width+';height:'+height+';');
+        setContainerProperty: function(container, width, height, draggable, resizable) {
+            if (container) {
+                container.setAttribute('data-fg-draggable', draggable);
+                container.setAttribute('data-fg-resizable', resizable);
+                container.style.cssText += ";width:"+width+'px;height:'+height+'px;';
+            }
         },
         find: function(node, type) {
             if (node === handleEvent.body) return undefined;   // 向上递归到body就停
@@ -478,7 +482,8 @@
                     .buildArea(area, max.row, max.col)
                     .putData(area, data)
                     .layout(area, data);
-                view.setContainerWH(opt.container, max.col * opt.cellW, max.row * opt.cellH);
+                view.setContainerProperty(opt.container, max.col * opt.cellW, max.row * opt.cellH, 
+                    opt.draggable, opt.resizable);
                 view.render(data, opt.container);
             }
             return this;

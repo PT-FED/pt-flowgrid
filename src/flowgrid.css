@@ -6,6 +6,12 @@
     -moz-user-select:none;
     transition: height 0.2s, width 0.2s;
 }
+.pt-flowgrid-container[data-fg-draggable="false"] .pt-flowgrid-item-drag {
+    display: none;
+}
+.pt-flowgrid-container[data-fg-resizable="false"] .pt-flowgrid-item-zoom {
+    display: none;
+}
 .pt-flowgrid-item {
     cursor: pointer;
     -webkit-user-select:none;
