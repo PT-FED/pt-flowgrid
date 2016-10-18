@@ -28,6 +28,8 @@
     var GRID_ITEM = 'pt-flowgrid-item';                    // 拖拽块classname
     var GRID_ITEM_INNER = 'pt-flowgrid-item-inner';        // 拖拽块内部区域div的classname
     var GRID_ITEM_ZOOM = 'pt-flowgrid-item-zoom';          // 拖拽块内部放大缩小div的classname
+    var GRID_ITEM_DRAG = 'pt-flowgrid-item-drag';          // 拖拽块可以进行拖拽div的classname
+    var GRID_ITEM_DRAG_SVG = 'pt-flowgrid-item-drag-svg';  // 拖拽块可以进行拖拽div里面svg的classname
     var GRID_ITEM_ANIMATE = 'pt-flowgrid-item-animate';    // 拖拽块classname 动画效果
     var GRID_ITEM_GRAG_DROP = 'pt-flowgrid-item-dragdrop'; // 正在拖拽的块classname
     var GRID_ITEM_PLACEHOLDER = 'pt-flowgrid-item-placeholder'  // 拖拽块的占位符
@@ -185,12 +187,18 @@
         },
         dragElement: null,          // 拖拽的dom节点
         dragstart: function(event, node) {
+            var className = event.target.className;
+            // 判断是否拖拽
+            if (className && className.split(" ").indexOf(GRID_ITEM_DRAG) === -1) {
+                // 判断是否放大缩小
+                if (className.split(" ").indexOf(GRID_ITEM_ZOOM) !== -1) {
+                    this.isResize = true;
+                } else {
+                    return;
+                }
+            }
             this.isDrag = true;
             this.dragElement = node;
-            // 这句话不太好, 不严谨 ???
-            if (event.target.className === GRID_ITEM_ZOOM) {
-                this.isResize = true;
-            }
             // 取得容器和网格对象
             var container = view.find(node, GRID_CONTAINER);
             grid = cache[container.getAttribute(GRID_CONTAINER_INDEX)*1];
@@ -342,10 +350,33 @@
         create: function(node, className) {
             var item = document.createElement("div"),
                 zoom = document.createElement("div"),
+                drag = document.createElement("div"),
                 inner = document.createElement("div");
             item.className = className ? className : (GRID_ITEM + ' ' + GRID_ITEM_ANIMATE);
             inner.className = GRID_ITEM_INNER;
             zoom.className = GRID_ITEM_ZOOM;
+            drag.className = GRID_ITEM_DRAG;
+            drag.innerHTML = '<svg class="'+GRID_ITEM_DRAG_SVG+'" viewBox="0 0 200 200"'
+                             + 'version="1.1" xmlns="http://www.w3.org/2000/svg" '
+                             + 'xmlns:xlink="http://www.w3.org/1999/xlink">'
+                             + '<g class="transform-group">'
+                             + '<g transform="scale(0.1953125, 0.1953125)">'
+                             + '<path d="M 839.457 330.079 c 36.379 0 181.921 145.538 181.921 181.926 '
+                             + 'c 0 36.379 -145.543 181.916 -181.921 181.916 '
+                             + 'c -36.382 0 -36.382 -36.388 -36.382 -36.388 '
+                             + 'v -291.07 c 0 0 0 -36.384 36.382 -36.384 '
+                             + 'v 0 Z M 803.058 475.617 v 72.766 l -254.687 -0.001 '
+                             + 'v 254.692 h -72.766 v -254.691 h -254.683 '
+                             + 'v -72.766 h 254.682 v -254.693 h 72.766 v 254.692 '
+                             + 'l 254.688 0.001 Z M 693.921 184.546 c 0 36.377 -36.388 36.377 -36.388 36.377 '
+                             + 'h -291.07 c 0 0 -36.383 0 -36.383 -36.377 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
+                             + 'c 36.375 0 181.915 145.539 181.915 181.926 v 0 Z M 657.531 803.075 '
+                             + 'c 0 0 36.388 0 36.388 36.382 c 0 36.388 -145.538 181.921 -181.916 181.921 '
+                             + 'c -36.387 0 -181.926 -145.532 -181.926 -181.921 c 0 -36.382 36.383 -36.382 36.383 -36.382 '
+                             + 'h 291.07 Z M 220.924 548.383 v 109.149 c 0 0 0 36.388 -36.377 36.388 '
+                             + 'c -36.387 0 -181.926 -145.538 -181.926 -181.916 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
+                             + 'c 36.377 0 36.377 36.383 36.377 36.383 v 181.92 Z M 220.924 548.383 Z"></path></g></g></svg>';
+            inner.appendChild(drag);
             inner.appendChild(zoom);
             item.appendChild(inner);
             this.update(item, node, className);
@@ -544,8 +575,8 @@
         },
         // 自动扫描空位添加节点
         addAutoNode: function(data, area, opt) {
-            var r, c, node = this.clone(opt.autoAddCell);
-            node.id = data.length;
+            var r, c, node = buildNode(opt.autoAddCell, data.length, opt);
+            // node.id = data.length;
             for (r = 0; r < area.length; r = r + node.h ) {
                 node.y = r;
                 for (c = 0; c < area[0].length; c = c + node.w ) {
@@ -605,12 +636,12 @@
         },
         // 处理脏数据
         checkIndexIsOutOf: function(area, node) {
-            // var row = area.length,
-                // col = (area[0] && area[0].length) || this.opt.col;
+            var row = area.length,
+                col = (area[0] && area[0].length) || this.opt.col;
             // 数组下标越界检查
             node.x < 0 && (node.x = 0);
             node.y < 0 && (node.y = 0);
-            // node.x + node.w > col && (node.x = col - node.w);
+            node.x + node.w > col && (node.x = col - node.w);
             return this;
         },
         // 检测矩形碰撞

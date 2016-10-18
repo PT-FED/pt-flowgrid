@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <link rel="stylesheet" type="text/css" href="../../src/flowgrid.css">
+        <script type="text/javascript" src="../../src/flowgrid.js"></script>
+        <style type="text/css">
+            * {
+                margin: 0;
+                padding: 0;
+            }
+            html {
+                height: 100%;
+            }
+            body {
+                height: 100%;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            .pt-flowgrid-container {
+                background-color: #b3ee22;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+    <!-- <a href="javascript:void(0);" id="add">新增</a> -->
+    
+
+        <div class="pt-flowgrid-container">
+            
+        </div>
+
+        <script type="text/javascript">
+
+            var grid = flowgrid.instance({cellMinW:1,cellMinH:1});
+            
+            var data = [            // x(col), y(row), w(width), h(heigth)
+            //   {x:0,y:3,w:3,h:3}
+            // , {x:0,y:2,w:3,h:1}
+            // , {x:0,y:0,w:3,h:2}
+            // , {x:1,y:4,w:2,h:2}
+
+                  {x:0,y:0,w:2,h:2}
+                , {x:2,y:5,w:2,h:3}
+                , {x:2,y:3,w:3,h:1}
+                , {x:2,y:1,w:2,h:2}
+                , {x:5,y:5,w:2,h:2}
+                , {x:5,y:3,w:2,h:2}
+                , {x:5,y:1,w:2,h:2}
+                , {x:7,y:5,w:2,h:2}
+                , {x:7,y:3,w:2,h:2}
+                , {x:7,y:1,w:2,h:2}
+                , {x:9,y:5,w:2,h:2}
+                , {x:9,y:3,w:2,h:2}
+                , {x:9,y:1,w:2,h:2}
+            ];
+            grid.setData(data);
+
+            // 新增
+            var add = document.getElementById('add');
+            add && add.addEventListener('click', function(event) {
+                node = grid.add();
+                showConsole(grid.area);
+            }, false);
+
+            // 控制台展示
+            function showConsole(area) {
+                console.log('**************************************************************');
+                var PLACEHOLDER = '-';              // 占位符
+                var put = '';
+                for (var i = 0, rlen = area.length; i < rlen; i++) {
+                    var col = area[i];
+                    for (var j = 0, clen = col.length, cell=undefined; j < clen; j++) {
+                        cell = (col[j] || col[j] === 0) ? col[j] : PLACEHOLDER;
+                        put = put + '\t' + cell;
+                    }
+                    console.log(put);
+                    console.log(' ');
+                    put = '';
+                }
+            }
+            showConsole(grid.area);
+
+        </script>
+    </body>
+</html>

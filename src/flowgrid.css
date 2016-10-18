@@ -13,15 +13,42 @@
     position: absolute;
     z-index: 10;
 }
-.pt-flowgrid-item-zoom {
+.pt-flowgrid-item-drag {
+    position: absolute;
+    border-radius: 18px;
+    width: 36px;
+    height: 36px;
+    top: 0;
+    background-color: #c1c1c1;
+    left: 50%;
+    transform: translate(-50%, -100%);
+    z-index: 2147483647;
+    transition: transform 0.3s;
+    cursor: move;
+    text-align: center;
+}
+.pt-flowgrid-item-drag:after {
     content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+.pt-flowgrid-item-drag-svg {
+    width: 16px;
+    height: 16px;
+    fill: #fff;
+    margin-top: 16px;
+}
+.pt-flowgrid-item-zoom {
     position: absolute;
     bottom: -32px;
     right: -32px;
     height: 32px;
     width: 32px;
     transform: rotate(45deg);
-    background: #84d943;
+    background: #c1c1c1;
     cursor: se-resize;
     transition: right 0.3s, bottom 0.3s;
     z-index: 2147483647;
@@ -38,6 +65,9 @@
 .pt-flowgrid-item-inner:hover .pt-flowgrid-item-zoom {
     bottom: -16px;
     right: -16px;
+}
+.pt-flowgrid-item-inner:hover .pt-flowgrid-item-drag {
+    transform: translate(-50%, -40%);
 }
 .pt-flowgrid-item-dragdrop .pt-flowgrid-item-inner .pt-flowgrid-item-zoom {
     bottom: -32px;
