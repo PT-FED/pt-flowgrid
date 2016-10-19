@@ -62,11 +62,12 @@
             var add = document.getElementById('add');
             add && add.addEventListener('click', function(event) {
                 node = grid.add();
-                showConsole(grid.area);
+                console_layout();
             }, false);
 
             // 控制台展示
-            function showConsole(area) {
+            function console_layout() {
+                var area = grid.area;
                 console.log('**************************************************************');
                 var PLACEHOLDER = '-';              // 占位符
                 var put = '';
@@ -74,14 +75,14 @@
                     var col = area[i];
                     for (var j = 0, clen = col.length, cell=undefined; j < clen; j++) {
                         cell = (col[j] || col[j] === 0) ? col[j] : PLACEHOLDER;
-                        put = put + '\t' + cell;
+                        put = put + '\t' + (cell === 'placeholder' ? 'p' : cell);
                     }
                     console.log(put);
                     console.log(' ');
                     put = '';
                 }
             }
-            showConsole(grid.area);
+            console_layout();
 
         </script>
     </body>

@@ -26,9 +26,9 @@
     var MEDIA_QUERY_MID = 992;                             // 分辨率992px
     var MEDIA_QUERY_BIG = 1200;                            // 分辨率1200px
     var GRID_ITEM = 'pt-flowgrid-item';                    // 拖拽块classname
-    var GRID_ITEM_INNER = 'pt-flowgrid-item-inner';        // 拖拽块内部区域div的classname
     var GRID_ITEM_ZOOM = 'pt-flowgrid-item-zoom';          // 拖拽块内部放大缩小div的classname
     var GRID_ITEM_DRAG = 'pt-flowgrid-item-drag';          // 拖拽块可以进行拖拽div的classname
+    var GRID_ITEM_CONTENT = 'pf-flowgrid-item-content';    // 拖拽块的展示内容区div的classname
     var GRID_ITEM_DRAG_SVG = 'pt-flowgrid-item-drag-svg';  // 拖拽块可以进行拖拽div里面svg的classname
     var GRID_ITEM_ANIMATE = 'pt-flowgrid-item-animate';    // 拖拽块classname 动画效果
     var GRID_ITEM_GRAG_DROP = 'pt-flowgrid-item-dragdrop'; // 正在拖拽的块classname
@@ -49,7 +49,8 @@
         container: null,
         draggable: true, 
         resizable: true,
-        flow: true,
+        isDragHandle: false,
+        padding: 5,
         row: 7,
         col: 12,
         cellMinW: 2,
@@ -196,7 +197,9 @@
                 if (className.split(" ").indexOf(GRID_ITEM_ZOOM) !== -1) {
                     this.isResize = true;
                 } else {
-                    return;
+                    // 如果有拖拽句柄的设置, 但没有选中, 则return
+                    if (grid.opt.isDragHandle)
+                        return;
                 }
             }
             this.isDrag = true;
@@ -354,35 +357,38 @@
         create: function(node, className) {
             var item = document.createElement("div"),
                 zoom = document.createElement("div"),
-                drag = document.createElement("div"),
-                inner = document.createElement("div");
+                content = document.createElement("div");
+            // 是否配置了拖拽句柄
+            if (grid.opt.isDragHandle) {
+                var drag = document.createElement("div");
+                drag.className = GRID_ITEM_DRAG;
+                drag.innerHTML = '<svg class="'+GRID_ITEM_DRAG_SVG+'" viewBox="0 0 200 200"'
+                                 + 'version="1.1" xmlns="http://www.w3.org/2000/svg" '
+                                 + 'xmlns:xlink="http://www.w3.org/1999/xlink">'
+                                 + '<g class="transform-group">'
+                                 + '<g transform="scale(0.1953125, 0.1953125)">'
+                                 + '<path d="M 839.457 330.079 c 36.379 0 181.921 145.538 181.921 181.926 '
+                                 + 'c 0 36.379 -145.543 181.916 -181.921 181.916 '
+                                 + 'c -36.382 0 -36.382 -36.388 -36.382 -36.388 '
+                                 + 'v -291.07 c 0 0 0 -36.384 36.382 -36.384 '
+                                 + 'v 0 Z M 803.058 475.617 v 72.766 l -254.687 -0.001 '
+                                 + 'v 254.692 h -72.766 v -254.691 h -254.683 '
+                                 + 'v -72.766 h 254.682 v -254.693 h 72.766 v 254.692 '
+                                 + 'l 254.688 0.001 Z M 693.921 184.546 c 0 36.377 -36.388 36.377 -36.388 36.377 '
+                                 + 'h -291.07 c 0 0 -36.383 0 -36.383 -36.377 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
+                                 + 'c 36.375 0 181.915 145.539 181.915 181.926 v 0 Z M 657.531 803.075 '
+                                 + 'c 0 0 36.388 0 36.388 36.382 c 0 36.388 -145.538 181.921 -181.916 181.921 '
+                                 + 'c -36.387 0 -181.926 -145.532 -181.926 -181.921 c 0 -36.382 36.383 -36.382 36.383 -36.382 '
+                                 + 'h 291.07 Z M 220.924 548.383 v 109.149 c 0 0 0 36.388 -36.377 36.388 '
+                                 + 'c -36.387 0 -181.926 -145.538 -181.926 -181.916 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
+                                 + 'c 36.377 0 36.377 36.383 36.377 36.383 v 181.92 Z M 220.924 548.383 Z"></path></g></g></svg>';
+                item.appendChild(drag);
+            }
             item.className = className ? className : (GRID_ITEM + ' ' + GRID_ITEM_ANIMATE);
-            inner.className = GRID_ITEM_INNER;
             zoom.className = GRID_ITEM_ZOOM;
-            drag.className = GRID_ITEM_DRAG;
-            drag.innerHTML = '<svg class="'+GRID_ITEM_DRAG_SVG+'" viewBox="0 0 200 200"'
-                             + 'version="1.1" xmlns="http://www.w3.org/2000/svg" '
-                             + 'xmlns:xlink="http://www.w3.org/1999/xlink">'
-                             + '<g class="transform-group">'
-                             + '<g transform="scale(0.1953125, 0.1953125)">'
-                             + '<path d="M 839.457 330.079 c 36.379 0 181.921 145.538 181.921 181.926 '
-                             + 'c 0 36.379 -145.543 181.916 -181.921 181.916 '
-                             + 'c -36.382 0 -36.382 -36.388 -36.382 -36.388 '
-                             + 'v -291.07 c 0 0 0 -36.384 36.382 -36.384 '
-                             + 'v 0 Z M 803.058 475.617 v 72.766 l -254.687 -0.001 '
-                             + 'v 254.692 h -72.766 v -254.691 h -254.683 '
-                             + 'v -72.766 h 254.682 v -254.693 h 72.766 v 254.692 '
-                             + 'l 254.688 0.001 Z M 693.921 184.546 c 0 36.377 -36.388 36.377 -36.388 36.377 '
-                             + 'h -291.07 c 0 0 -36.383 0 -36.383 -36.377 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
-                             + 'c 36.375 0 181.915 145.539 181.915 181.926 v 0 Z M 657.531 803.075 '
-                             + 'c 0 0 36.388 0 36.388 36.382 c 0 36.388 -145.538 181.921 -181.916 181.921 '
-                             + 'c -36.387 0 -181.926 -145.532 -181.926 -181.921 c 0 -36.382 36.383 -36.382 36.383 -36.382 '
-                             + 'h 291.07 Z M 220.924 548.383 v 109.149 c 0 0 0 36.388 -36.377 36.388 '
-                             + 'c -36.387 0 -181.926 -145.538 -181.926 -181.916 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
-                             + 'c 36.377 0 36.377 36.383 36.377 36.383 v 181.92 Z M 220.924 548.383 Z"></path></g></g></svg>';
-            inner.appendChild(drag);
-            inner.appendChild(zoom);
-            item.appendChild(inner);
+            content.className = GRID_ITEM_CONTENT;
+            item.appendChild(content);
+            item.appendChild(zoom);
             this.update(item, node, className);
             return item;
         },
@@ -399,8 +405,8 @@
                 // element.setAttribute('data-fg-min-h', node.minH);
                 element.style.cssText += (';transform: translate(' + (node.x * opt.cellW_Int) + 'px,'
                     + (node.y * opt.cellH_Int) + 'px);'
-                    + 'width: ' + (node.w * opt.cellW_Int) + 'px;'
-                    + 'height: ' + (node.h * opt.cellH_Int) + 'px;');    
+                    + 'width: ' + (node.w * opt.cellW_Int - 2*opt.padding)  + 'px;'
+                    + 'height: ' + (node.h * opt.cellH_Int - 2*opt.padding) + 'px;');    
             }
         },
         clear: function(container) {
@@ -488,9 +494,10 @@
             }
             return this;
         },
-        // 计算最小网格, 根据 16: 9 计算得出高
+        // 计算最小网格宽高
         computeCellScale: function(opt) {
-            opt.containerW = opt.container.clientWidth;
+            opt.containerW = opt.container.clientWidth,
+            opt.containerH = opt.container.clientHeight;
             opt.cellW = opt.containerW / opt.col;
             opt.cellH = opt.cellW / opt.cellScale.w * opt.cellScale.h; 
             opt.cellW_Int = Math.floor(opt.cellW);
@@ -581,7 +588,6 @@
         // 自动扫描空位添加节点
         addAutoNode: function(data, area, opt) {
             var r, c, node = buildNode(opt.autoAddCell, data.length, opt);
-            // node.id = data.length;
             for (r = 0; r < area.length; r = r + node.h ) {
                 node.y = r;
                 for (c = 0; c < area[0].length; c = c + node.w ) {

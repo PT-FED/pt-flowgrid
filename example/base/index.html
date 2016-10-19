@@ -16,7 +16,7 @@
             .pt-flowgrid-container {
                 background-color: #b3ee22;
                 width: 100%;
-                height: 1000px;
+                height: 100%;
             }
             .content {
                 text-align: center;
@@ -30,18 +30,20 @@
         <div class="pt-flowgrid-container">
             <!-- 移动块 -->
             <div class="pt-flowgrid-item" data-fg-x="0" data-fg-y="0" data-fg-w="4" data-fg-h="2">
-                <!-- 内容区的外层容器 -->
-                <div class="pt-flowgrid-item-inner">
-                    <div class="content">1</div>
-                    <!-- 放大缩小句柄, 隐藏或删除则不能放大缩小 -->
-                    <div class="pt-flowgrid-item-zoom"></div>
+                <!-- 内容区, 摆放展示内容 -->
+                <div class="pt-flowgrid-item-content">
+                    1
                 </div>
+                <!-- 拖拽句柄, 隐藏或删除则不能拖拽更换位置 -->
+                <div class="pt-flowgrid-item-drag">
+                    <svg class="pt-flowgrid-item-drag-svg" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g class="transform-group"><g transform="scale(0.1953125, 0.1953125)"><path d="M 839.457 330.079 c 36.379 0 181.921 145.538 181.921 181.926 c 0 36.379 -145.543 181.916 -181.921 181.916 c -36.382 0 -36.382 -36.388 -36.382 -36.388 v -291.07 c 0 0 0 -36.384 36.382 -36.384 v 0 Z M 803.058 475.617 v 72.766 l -254.687 -0.001 v 254.692 h -72.766 v -254.691 h -254.683 v -72.766 h 254.682 v -254.693 h 72.766 v 254.692 l 254.688 0.001 Z M 693.921 184.546 c 0 36.377 -36.388 36.377 -36.388 36.377 h -291.07 c 0 0 -36.383 0 -36.383 -36.377 c 0 -36.387 145.538 -181.926 181.926 -181.926 c 36.375 0 181.915 145.539 181.915 181.926 v 0 Z M 657.531 803.075 c 0 0 36.388 0 36.388 36.382 c 0 36.388 -145.538 181.921 -181.916 181.921 c -36.387 0 -181.926 -145.532 -181.926 -181.921 c 0 -36.382 36.383 -36.382 36.383 -36.382 h 291.07 Z M 220.924 548.383 v 109.149 c 0 0 0 36.388 -36.377 36.388 c -36.387 0 -181.926 -145.538 -181.926 -181.916 c 0 -36.387 145.538 -181.926 181.926 -181.926 c 36.377 0 36.377 36.383 36.377 36.383 v 181.92 Z M 220.924 548.383 Z"></path></g></g></svg>
+                </div>
+                <!-- 放大缩小句柄, 隐藏或删除则不能放大缩小 -->
+                <div class="pt-flowgrid-item-zoom"></div>
             </div>
             <div class="pt-flowgrid-item" data-fg-x="0" data-fg-y="2" data-fg-w="4" data-fg-h="2">
-                <div class="pt-flowgrid-item-inner">
-                    <div class="content">2</div>
-                    <div class="pt-flowgrid-item-zoom"></div>
-                </div>
+                <div class="pt-flowgrid-item-content">2</div>
+                <div class="pt-flowgrid-item-zoom"></div>
             </div>
         </div>
 
