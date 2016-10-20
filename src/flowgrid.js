@@ -46,15 +46,20 @@
 
     // 默认设置
     var setting = {
-        container: null,
-        draggable: true, 
-        resizable: true,
-        isDragHandle: false,
-        padding: 5,
         row: 7,
         col: 12,
         cellMinW: 2,
         cellMinH: 2,
+        container: null,
+        draggable: true, 
+        resizable: true,
+        isDragHandle: false,
+        padding: {
+            top: 5,
+            left: 5,
+            right: 5,
+            bottom: 5   
+        },
         cellScale: {
             w: 16,
             h: 9
@@ -153,7 +158,8 @@
             this.isbind = false;
         },
         mousedown: function(event) {
-            var node = view.find(event.target, GRID_ITEM);
+            var node = view.searchUp(event.target, GRID_ITEM)
+                // content = view.searchUp(event.target, GRID_ITEM_CONTENT);
             if (node) {
                 dragdrop.dragstart(event, node);
                 asyncFun(function() {
@@ -205,7 +211,7 @@
             this.isDrag = true;
             this.dragElement = node;
             // 取得容器和网格对象
-            var container = view.find(node, GRID_CONTAINER);
+            var container = view.searchUp(node, GRID_CONTAINER);
             grid = cache[container.getAttribute(GRID_CONTAINER_INDEX)*1];
             // 取得当前拖拽节点, 并替换当前拖拽节点id
             var query = grid.query(node.getAttribute(GRID_ITEM_DATA_ID)*1);
@@ -257,8 +263,6 @@
             this.dragElement.style.cssText += ';transform: translate(' + (translateX + dx) + 'px,' + (translateY + dy) + 'px);';
             // 当前拖拽节点的坐标, 转换成对齐网格的坐标
             var nodeX = Math.round(translateX / cellW_Int);
-            // (优化) 变换位置更流畅, dy > 0 是下移
-            // var nodeY = dy > 0 ? Math.floor(translateY / cellH_Int) : Math.ceil(translateY / cellH_Int);
             var nodeY = Math.round(translateY / cellH_Int);
             // 判断坐标是否变化
             if (this.dragNode.data.x !== nodeX || this.dragNode.data.y !== nodeY) {
@@ -273,8 +277,8 @@
         resize: function(event, opt, dx, dy) {
             var eleW = this.dragElement.clientWidth + dx,
                 eleH = this.dragElement.clientHeight + dy,
-                minW = opt.cellW_Int * this.dragNode.data.minW,
-                minH = opt.cellH_Int * this.dragNode.data.minH,
+                minW = opt.cellW_Int * this.dragNode.data.minW - opt.padding.left - opt.padding.right,
+                minH = opt.cellH_Int * this.dragNode.data.minH - opt.padding.top - opt.padding.bottom,
                 nodeW = Math.ceil(eleW / opt.cellW_Int),
                 nodeH = Math.ceil(eleH / opt.cellH_Int);
             // 计算最小尺寸
@@ -341,18 +345,18 @@
             if (container) {
                 container.setAttribute('data-fg-draggable', draggable);
                 container.setAttribute('data-fg-resizable', resizable);
-                container.style.cssText += ";width:"+width+'px;height:'+height+'px;';
+                container.style.cssText += ";width:"+width+'px;'+'height:'+height+'px;';
             }
         },
-        find: function(node, type) {
-            if (node === handleEvent.body) return undefined;   // 向上递归到body就停
+        searchUp: function(node, type) {
+            if (node === handleEvent.body || node === document) return undefined;   // 向上递归到body就停
             var arr = node.className.split(' ');
             for (var i = 0, len = arr.length; i < len; i++) {
                 if (arr[i] === type) {
                     return node;
                 }
             }
-            return this.find(node.parentNode, type);
+            return this.searchUp(node.parentNode, type);
         },
         create: function(node, className) {
             var item = document.createElement("div"),
@@ -363,25 +367,25 @@
                 var drag = document.createElement("div");
                 drag.className = GRID_ITEM_DRAG;
                 drag.innerHTML = '<svg class="'+GRID_ITEM_DRAG_SVG+'" viewBox="0 0 200 200"'
-                                 + 'version="1.1" xmlns="http://www.w3.org/2000/svg" '
-                                 + 'xmlns:xlink="http://www.w3.org/1999/xlink">'
-                                 + '<g class="transform-group">'
-                                 + '<g transform="scale(0.1953125, 0.1953125)">'
-                                 + '<path d="M 839.457 330.079 c 36.379 0 181.921 145.538 181.921 181.926 '
-                                 + 'c 0 36.379 -145.543 181.916 -181.921 181.916 '
-                                 + 'c -36.382 0 -36.382 -36.388 -36.382 -36.388 '
-                                 + 'v -291.07 c 0 0 0 -36.384 36.382 -36.384 '
-                                 + 'v 0 Z M 803.058 475.617 v 72.766 l -254.687 -0.001 '
-                                 + 'v 254.692 h -72.766 v -254.691 h -254.683 '
-                                 + 'v -72.766 h 254.682 v -254.693 h 72.766 v 254.692 '
-                                 + 'l 254.688 0.001 Z M 693.921 184.546 c 0 36.377 -36.388 36.377 -36.388 36.377 '
-                                 + 'h -291.07 c 0 0 -36.383 0 -36.383 -36.377 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
-                                 + 'c 36.375 0 181.915 145.539 181.915 181.926 v 0 Z M 657.531 803.075 '
-                                 + 'c 0 0 36.388 0 36.388 36.382 c 0 36.388 -145.538 181.921 -181.916 181.921 '
-                                 + 'c -36.387 0 -181.926 -145.532 -181.926 -181.921 c 0 -36.382 36.383 -36.382 36.383 -36.382 '
-                                 + 'h 291.07 Z M 220.924 548.383 v 109.149 c 0 0 0 36.388 -36.377 36.388 '
-                                 + 'c -36.387 0 -181.926 -145.538 -181.926 -181.916 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
-                                 + 'c 36.377 0 36.377 36.383 36.377 36.383 v 181.92 Z M 220.924 548.383 Z"></path></g></g></svg>';
+                     + 'version="1.1" xmlns="http://www.w3.org/2000/svg" '
+                     + 'xmlns:xlink="http://www.w3.org/1999/xlink">'
+                     + '<g class="transform-group">'
+                     + '<g transform="scale(0.1953125, 0.1953125)">'
+                     + '<path d="M 839.457 330.079 c 36.379 0 181.921 145.538 181.921 181.926 '
+                     + 'c 0 36.379 -145.543 181.916 -181.921 181.916 '
+                     + 'c -36.382 0 -36.382 -36.388 -36.382 -36.388 '
+                     + 'v -291.07 c 0 0 0 -36.384 36.382 -36.384 '
+                     + 'v 0 Z M 803.058 475.617 v 72.766 l -254.687 -0.001 '
+                     + 'v 254.692 h -72.766 v -254.691 h -254.683 '
+                     + 'v -72.766 h 254.682 v -254.693 h 72.766 v 254.692 '
+                     + 'l 254.688 0.001 Z M 693.921 184.546 c 0 36.377 -36.388 36.377 -36.388 36.377 '
+                     + 'h -291.07 c 0 0 -36.383 0 -36.383 -36.377 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
+                     + 'c 36.375 0 181.915 145.539 181.915 181.926 v 0 Z M 657.531 803.075 '
+                     + 'c 0 0 36.388 0 36.388 36.382 c 0 36.388 -145.538 181.921 -181.916 181.921 '
+                     + 'c -36.387 0 -181.926 -145.532 -181.926 -181.921 c 0 -36.382 36.383 -36.382 36.383 -36.382 '
+                     + 'h 291.07 Z M 220.924 548.383 v 109.149 c 0 0 0 36.388 -36.377 36.388 '
+                     + 'c -36.387 0 -181.926 -145.538 -181.926 -181.916 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
+                     + 'c 36.377 0 36.377 36.383 36.377 36.383 v 181.92 Z M 220.924 548.383 Z"></path></g></g></svg>';
                 item.appendChild(drag);
             }
             item.className = className ? className : (GRID_ITEM + ' ' + GRID_ITEM_ANIMATE);
@@ -405,8 +409,8 @@
                 // element.setAttribute('data-fg-min-h', node.minH);
                 element.style.cssText += (';transform: translate(' + (node.x * opt.cellW_Int) + 'px,'
                     + (node.y * opt.cellH_Int) + 'px);'
-                    + 'width: ' + (node.w * opt.cellW_Int - 2*opt.padding)  + 'px;'
-                    + 'height: ' + (node.h * opt.cellH_Int - 2*opt.padding) + 'px;');    
+                    + 'width: ' + (node.w * opt.cellW_Int - opt.padding.left - opt.padding.right)  + 'px;'
+                    + 'height: ' + (node.h * opt.cellH_Int - opt.padding.top - opt.padding.bottom) + 'px;');    
             }
         },
         clear: function(container) {
@@ -488,7 +492,7 @@
                     .buildArea(area, max.row, max.col)
                     .putData(area, data)
                     .layout(area, data);
-                view.setContainerProperty(opt.container, max.col * opt.cellW, max.row * opt.cellH, 
+                view.setContainerProperty(opt.container, max.col * opt.cellW, max.row * opt.cellH,
                     opt.draggable, opt.resizable);
                 view.render(data, opt.container);
             }
@@ -496,7 +500,7 @@
         },
         // 计算最小网格宽高
         computeCellScale: function(opt) {
-            opt.containerW = opt.container.clientWidth,
+            opt.containerW = opt.container.clientWidth;
             opt.containerH = opt.container.clientHeight;
             opt.cellW = opt.containerW / opt.col;
             opt.cellH = opt.cellW / opt.cellScale.w * opt.cellScale.h; 
