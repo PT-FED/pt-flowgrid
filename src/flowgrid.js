@@ -5,7 +5,7 @@
  * version: 1.0.1
  * 描述: 可拖拽流式布局
  * 原则和思路:  不依赖任何框架和类库, 通过指定classname进行配置, 实现view层的拖拽, 只和css打交道.
- * 兼容性: ie9+
+ * 兼容性: ie11+
  * 支持: requirejs和commonjs和seajs, 
  */
 (function (parent, fun) {
@@ -53,7 +53,7 @@
         container: null,
         draggable: true, 
         resizable: true,
-        isDragHandle: false,
+        isDragBar: false,
         padding: {
             top: 5,
             left: 5,
@@ -136,25 +136,29 @@
             if (this.isbind) return;
             this.isbind = isbind;
             this.body = body;
+            // this.wheel = typeof this.body.onmousewheel === 'undefined' ? "DOMMouseScroll" : "mousewheel";
             this.unbindEvent();
             this.bindEvent();
         },
         // 绑定监听
         bindEvent: function() {
+            
             document.addEventListener('mousedown', this.mousedown , false);
             document.addEventListener('mousemove', this.mousemove, false);
-            // document.addEventListener('mouseout', this.mouseout, false);
-            // document.addEventListener('mouseover', this.mouseover, false);
             document.addEventListener('mouseup', this.mouseup, false);
+            // document.addEventListener(this.wheel, this.mousewheel, false);
+            // document.addEventListener('mouseout', this.mouseout, false);
+            // document.addEventListener('mouseover', this.mouseover, false);            
             this.isbind = true;
         },
         // 移除监听
         unbindEvent: function() {
             document.removeEventListener('mousedown', this.mousedown, false);
             document.removeEventListener('mousemove', this.mousemove, false);
+            document.removeEventListener('mouseup', this.mouseup, false);
+            // document.removeEventListener(this.wheel, this.mousewheel, false);
             // document.removeEventListener('mouseout', this.mouseout, false);
             // document.removeEventListener('mouseover', this.mouseover, false);
-            document.removeEventListener('mouseup', this.mouseup, false);
             this.isbind = false;
         },
         mousedown: function(event) {
@@ -182,6 +186,10 @@
                 dragdrop.dragend(event);
             }
         },
+        mousewheel: function(event) {
+            // event.preventDefault();
+            // console.log(event, event.wheelDelta, event.detail);
+        },
         mouseout: function (event) {},
         mouseover: function (event) {}
     };
@@ -204,7 +212,7 @@
                     this.isResize = true;
                 } else {
                     // 如果有拖拽句柄的设置, 但没有选中, 则return
-                    if (grid.opt.isDragHandle)
+                    if (grid.opt.isDragBar)
                         return;
                 }
             }
@@ -269,6 +277,7 @@
                 grid.clearNodeInArea(grid.area, this.dragNode.data);
                 this.dragNode.data.x = nodeX;
                 this.dragNode.data.y = nodeY;
+                // this.scroll(this.dragNode.data); // 滚动条跟随
                 grid.checkIndexIsOutOf(grid.area, this.dragNode.data);
                 grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
                 grid.load();
@@ -288,6 +297,7 @@
             this.dragElement.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
             if (this.dragNode.data.w !== nodeW || this.dragNode.data.h !== nodeH) {
+                //this.scroll(this.dragNode.data); // 滚动条跟随
                 grid.clearNodeInArea(grid.area, this.dragNode.data);
                 this.dragNode.data.w = nodeW;
                 this.dragNode.data.h = nodeH;
@@ -316,6 +326,23 @@
             // 移除临时dom(占位符)
             view.remove(PLACEHOLDER);
             delete grid.elements[PLACEHOLDER];
+            // 重新计算容器高度
+            var opt = grid.opt,
+                data = grid.data,
+                max = grid.getMaxRowAndCol(opt, data);
+            view.setContainerProperty(opt.container, max.col * opt.cellW, (max.row) * opt.cellH,
+                    opt.draggable, opt.resizable);
+        },
+        scroll: function(dragNode) {
+            var opt = grid.opt,
+                cellH = opt.cellH,
+                y = (dragNode.y + dragNode.h) * cellH,
+                height = document.body.clientHeight;
+            if ( y >= height ) {
+                document.body.scrollTop = document.body.scrollHeight;
+                document.documentElement.scrollTop = document.documentElement.scrollHeight;
+            }
+            console.log(height, y);
         }
     };
 
@@ -363,7 +390,7 @@
                 zoom = document.createElement("div"),
                 content = document.createElement("div");
             // 是否配置了拖拽句柄
-            if (grid.opt.isDragHandle) {
+            if (grid.opt.isDragBar) {
                 var drag = document.createElement("div");
                 drag.className = GRID_ITEM_DRAG;
                 drag.innerHTML = '<svg class="'+GRID_ITEM_DRAG_SVG+'" viewBox="0 0 200 200"'
@@ -492,7 +519,7 @@
                     .buildArea(area, max.row, max.col)
                     .putData(area, data)
                     .layout(area, data);
-                view.setContainerProperty(opt.container, max.col * opt.cellW, max.row * opt.cellH,
+                view.setContainerProperty(opt.container, max.col * opt.cellW, (max.row) * opt.cellH,
                     opt.draggable, opt.resizable);
                 view.render(data, opt.container);
             }
@@ -699,7 +726,7 @@
                     // 判断插入点应该上移还是下移, 通过重叠点的中间值h/2来判断
                     var median = offsetNode.h / 2 < 1 ? 1 : Math.floor(offsetNode.h / 2);
                     // 计算差值, 与中间值比较, dy > 2 下移(2是优化, 防止平移上下震动), 拿y+h来和中间值比较
-                    var difference = dy >= 2 ? node.y + node.h - offsetNode.y : node.y - offsetNode.y;
+                    var difference = (dy >= 2 && dy >= dx) ? node.y + node.h - offsetNode.y : node.y - offsetNode.y;
                     // 大于中间值, 求出下面那部分截断的偏移量, 等于是怕上下顺序连续的块,会错过互换位置
                     if ( difference >= median ) {
                         node.y = node.y + offsetUnderY;
