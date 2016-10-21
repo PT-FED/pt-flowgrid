@@ -39,7 +39,9 @@
     var PLACEHOLDER = 'placeholder';                       // 占位符
 
     // 网格对象的缓存对象
-    var cache = {};
+    var cache = {
+        count: 0
+    };
 
     // 默认设置
     var setting = {
@@ -196,7 +198,7 @@
             var className = event.target.className;
             // 取得容器和网格对象
             var container = view.searchUp(node, GRID_CONTAINER);
-            this.grid = cache[container.getAttribute(GRID_CONTAINER_INDEX)*1];
+            this.grid = cache[container.getAttribute(GRID_CONTAINER_INDEX)];
             // 判断是否拖拽
             if (className && className.split(" ").indexOf(GRID_ITEM_DRAG) === -1) {
                 // 判断是否放大缩小
@@ -463,19 +465,19 @@
     };
 
     // 网格对象
-    function Grid(options, originalData, container) {
+    function Grid(options, container, originalData) {
         // 兼容多种配置情况
         if (Array.isArray(options) && originalData === undefined) {
             originalData = options;
             options = undefined;
         }
-        this.init(extend(setting, options), originalData, container);
+        this.init(extend(setting, options), container, originalData);
     }
 
     // 网格对象原型
     Grid.prototype = {
         constructor: Grid,
-        init: function(opt, originalData, container) {
+        init: function(opt, container, originalData) {
             this.originalData = [];
             this.area = [];
             this.data = [];
@@ -813,36 +815,24 @@
     };
 
     // 构建实例
-    function instance(options, originalData) {
+    function instance(options, container, originalData) {
         // 初始化监听, 单例, 仅绑定一次
         handleEvent.init(true, document.body);
-        // 初始化网格对象
-        var containers = document.querySelectorAll('.'+GRID_CONTAINER);
-        for (var i = 0; i < containers.length; i++) {
-            var container = containers[i];
-            // 已经存在, 就不再初始化
-            if (!container.getAttribute(GRID_CONTAINER_INDEX)) {
-                container.setAttribute(GRID_CONTAINER_INDEX, i);
-                var flowgrid = new Grid(options, originalData, container);
-                cache[i] = flowgrid;
-            }
-        }
-        return cache[0];
-    }
-
-    // 返回对应容器的实例
-    function getGrid(container) {
-        if (!container) return;
-            var i, len;
-            for (var i = 0, len = cache.length; i < len; i++)
-                if (cache[i].opt.container === container)
-                    return cache[i];
+        // 判断容器
+        if (!container)
+            container = document.querySelector('.'+GRID_CONTAINER);
+        else if (typeof jQuery === "object" && container instanceof jQuery)
+            container = container[0];
+        // 设置编号
+        var index = GRID_CONTAINER + cache.count++;
+        if (!container.getAttribute(GRID_CONTAINER_INDEX))
+            container.setAttribute(GRID_CONTAINER_INDEX, index);
+        return cache[index] = new Grid(options, container, originalData);;
     }
 
     flowgrid = {
-        version: "1.0.1",
-        instance: instance,
-        get: getGrid
+        version: "1.0.2",
+        instance: instance
     };
 
     return flowgrid;

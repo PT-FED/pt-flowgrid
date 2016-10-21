@@ -28,13 +28,19 @@
     <!-- <a href="javascript:void(0);" id="add">新增</a> -->
     
 
-        <div class="pt-flowgrid-container">
+        <div class="pt-flowgrid-container" id="a">
+            
+        </div>
+
+        <div class="pt-flowgrid-container" id="b">
             
         </div>
 
         <script type="text/javascript">
 
             var grid = flowgrid.instance({cellMinW:1,cellMinH:1});
+
+            var b = flowgrid.instance({}, document.getElementById('b'));
             
             var data = [            // x(col), y(row), w(width), h(heigth)
             //   {x:0,y:3,w:3,h:3}
@@ -57,6 +63,14 @@
                 , {x:9,y:1,w:2,h:2}
             ];
             grid.setData(data);
+
+             var data2 = [            // x(col), y(row), w(width), h(heigth)
+              {x:0,y:3,w:3,h:3}
+            // , {x:0,y:2,w:3,h:1}
+            // , {x:0,y:0,w:3,h:2}
+            // , {x:1,y:4,w:2,h:2}
+            ];
+            b.setData(data2);
 
             // 新增
             var add = document.getElementById('add');
