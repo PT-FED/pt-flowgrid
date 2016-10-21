@@ -82,7 +82,11 @@
         if (!opt) return mod;
         var conf = {};
         for (var attr in mod) {
-            conf[attr] = opt[attr] || mod[attr];
+            if (typeof opt[attr] !== "undefined") {
+                conf[attr] = opt[attr];
+            } else {
+                conf[attr] = mod[attr];
+            }
         }
         return conf;
     }
@@ -156,10 +160,11 @@
             var node = view.searchUp(event.target, GRID_ITEM)
             if (node) {
                 dragdrop.dragstart(event, node);
+                var isResize = dragdrop.isResize;
                 var grid = dragdrop.grid;
                 if (grid.opt.draggable) {
                     asyncFun(function() {
-                        dragdrop.isResize ? grid.opt.onResizeStart && grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
+                        isResize ? grid.opt.onResizeStart && grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
                         : grid.opt.onDragStart && grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);    
                     })
                 }
@@ -171,10 +176,12 @@
             }
         },
         mouseup: function (event) {
+            // console.log(dragdrop.isResize, dragdrop.isDrag);
             if (dragdrop.isDrag) {
+                var isResize = dragdrop.isResize;
                 var grid = dragdrop.grid;
                 asyncFun(function() {
-                    dragdrop.isResize ? grid.opt.onResizeEnd && grid.opt.onResizeEnd(event, dragdrop.dragElement, dragdrop.dragNode) 
+                    isResize ? grid.opt.onResizeEnd && grid.opt.onResizeEnd(event, dragdrop.dragElement, dragdrop.dragNode) 
                         : grid.opt.onDragEnd && grid.opt.onDragEnd(event, dragdrop.dragElement, dragdrop.dragNode);
                 });
                 dragdrop.dragend(event);
@@ -199,6 +206,8 @@
             // 取得容器和网格对象
             var container = view.searchUp(node, GRID_CONTAINER);
             this.grid = cache[container.getAttribute(GRID_CONTAINER_INDEX)];
+            // 配置项, 禁用拖拽
+            if (!grid.opt.draggable) return;
             // 判断是否拖拽
             if (className && className.split(" ").indexOf(GRID_ITEM_DRAG) === -1) {
                 // 判断是否放大缩小
@@ -212,7 +221,7 @@
             this.isDrag = true;
             this.dragElement = node;
             // 取得当前拖拽节点, 并替换当前拖拽节点id
-            var query = this.grid.query(node.getAttribute(GRID_ITEM_DATA_ID)*1);
+            var query = this.grid.query(node.getAttribute(GRID_ITEM_DATA_ID));
             if (query) {
                 this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_GRAG_DROP;
                 this.dragNode.id = query.node.id;
@@ -222,7 +231,6 @@
                 var element = this.grid.elements[this.dragNode.data.id] = view.create(this.grid, this.dragNode.data);
                 this.grid.opt.container.appendChild(element);
             }
-            return grid;
         },
         drag: function(event) {
             var self = this;
@@ -354,7 +362,13 @@
                         minW: ele.getAttribute('data-fg-min-w')*1,
                         minH: ele.getAttribute('data-fg-min-h')*1
                     };
-                    grid.elements[i] = ele;
+                    var id = ele.getAttribute('data-fg-id');
+                    if (id) {
+                        arr[i].id = id;
+                        grid.elements[id] = ele;
+                    } else {
+                        grid.elements[i] = ele;
+                    }
                 }
             }
             return arr;
@@ -491,7 +505,7 @@
                 var arr = view.dom2obj(container, this);
                 if (arr && arr.length > 0) {
                     this.setData(arr);
-                    view.render(this.data, this.elements, container, this);
+                    // view.render(this.data, this.elements, container, this);
                 }
             }
             return this;
@@ -598,7 +612,7 @@
             } else {
                 node = this.addAutoNode(data, area, opt);
             }
-            data[node.id] = node;
+            data[data.length] = node;
             this.load(isload);
             asyncFun(function(){
                 self.opt.onAddNode && self.opt.onAddNode(self.elements[node.id], node);    
@@ -626,7 +640,7 @@
             // 从左到右, 从上到下
             for (r = node.y, rlen = node.y + node.h; r < rlen; r++) {
                 for (c = node.x, clen = node.x + node.w; c < clen; c++) {
-                    if (area[r] && (area[r][c] || area[r][c] === 0)) {
+                    if (area[r] && (area[r][c] || area[r][c] == 0)) {
                         return true;
                     }
                 }
@@ -656,7 +670,7 @@
         query: function(id) {
             var data = this.data;
             for (var i = 0, len = data.length; i < len; i++) {
-                if (data[i].id === id) {
+                if (data[i].id == id) {
                     return {
                         index: i,
                         node: data[i]
@@ -780,7 +794,7 @@
             for (r = node.y - 1; r >= 0; r--) {
                 for (c = node.x, len = node.x + node.w; c < len; c++){
                     cell = area[r][c];
-                    if (cell || cell === 0) {
+                    if (cell || cell == 0) {
                         return r+1;
                     }
                 }
