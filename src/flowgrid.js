@@ -8,7 +8,7 @@
  * 兼容性: ie11+
  * 支持: requirejs和commonjs和seajs, 
  */
-(function (parent, fun) {
+;(function (parent, fun) {
     if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
         module.exports = fun();
     } else if (typeof define === 'function' && typeof define.amd === 'object') {
@@ -144,16 +144,16 @@
         },
         // 绑定监听
         bindEvent: function() {
-            document.addEventListener('mousedown', this.mousedown , false);
-            document.addEventListener('mousemove', this.mousemove, false);
-            document.addEventListener('mouseup', this.mouseup, false);
+            document.addEventListener('mousedown', this.mousedown , true);
+            document.addEventListener('mousemove', this.mousemove, true);
+            document.addEventListener('mouseup', this.mouseup, true);
             this.isbind = true;
         },
         // 移除监听
         unbindEvent: function() {
-            document.removeEventListener('mousedown', this.mousedown, false);
-            document.removeEventListener('mousemove', this.mousemove, false);
-            document.removeEventListener('mouseup', this.mouseup, false);
+            document.removeEventListener('mousedown', this.mousedown, true);
+            document.removeEventListener('mousemove', this.mousemove, true);
+            document.removeEventListener('mouseup', this.mouseup, true);
             this.isbind = false;
         },
         mousedown: function(event) {
@@ -208,13 +208,16 @@
             // 配置项, 禁用拖拽
             if (!grid.opt.draggable) return;
             // 判断是否拖拽
-            if (className && className.split(" ").indexOf(GRID_ITEM_DRAG) === -1) {
-                // 判断是否放大缩小
-                if (className.split(" ").indexOf(GRID_ITEM_ZOOM) !== -1) {
-                    this.isResize = true;
-                } else {
-                    // 如果有拖拽句柄的设置, 但没有选中, 则return
-                    if (grid.opt.isDragBar) return;
+            if (typeof className === 'string') {
+                var classes =  className.split(" ");
+                if (classes.indexOf(GRID_ITEM_DRAG) === -1) {
+                    // 判断是否放大缩小
+                    if (classes.indexOf(GRID_ITEM_ZOOM) !== -1) {
+                        this.isResize = true;
+                    } else {
+                        // 如果有拖拽句柄的设置, 但没有选中, 则return
+                        if (grid.opt.isDragBar) return;
+                    }
                 }
             }
             this.isDrag = true;
@@ -371,11 +374,13 @@
         },
         searchUp: function(node, type) {
             if (node === handleEvent.body || node === document) return undefined;   // 向上递归到body就停
-            var arr = node.className.split(' ');
-            for (var i = 0, len = arr.length; i < len; i++) {
-                if (arr[i] === type) {
-                    return node;
-                }
+            var arr = typeof node.className === 'string' && node.className.split(' ');
+            if (arr) {
+                for (var i = 0, len = arr.length; i < len; i++) {
+                    if (arr[i] === type) {
+                        return node;
+                    }
+                }    
             }
             return this.searchUp(node.parentNode, type);
         },
@@ -618,7 +623,8 @@
                 this.checkIndexIsOutOf(area, node);
                 this.overlap(data, node);
             } else {
-                node = this.addAutoNode(data, area, opt);
+                var node = buildNode(opt.autoAddCell, data.length, opt);
+                node = this.addAutoNode(area, node);
             }
             data[data.length] = node;
             this.load(isload);
@@ -627,9 +633,13 @@
             })
             return node;
         },
+        // 取得节点空位
+        getVacant: function(w, h) {
+            return this.addAutoNode(this.area, {x: 0, y: 0, w: w, h: h});
+        },
         // 自动扫描空位添加节点
-        addAutoNode: function(data, area, opt) {
-            var r, c, node = buildNode(opt.autoAddCell, data.length, opt);
+        addAutoNode: function(area, node) {
+            var r, c;
             for (r = 0; r < area.length; r = r + node.h ) {
                 node.y = r;
                 for (c = 0; c < area[0].length; c = c + node.w ) {
@@ -866,4 +876,4 @@
     };
 
     return flowgrid;
-})
+});
