@@ -133,19 +133,14 @@
             if (this.isbind) return;
             this.isbind = isbind;
             this.body = body;
-            // this.wheel = typeof this.body.onmousewheel === 'undefined' ? "DOMMouseScroll" : "mousewheel";
             this.unbindEvent();
             this.bindEvent();
         },
         // 绑定监听
         bindEvent: function() {
-            
             document.addEventListener('mousedown', this.mousedown , false);
             document.addEventListener('mousemove', this.mousemove, false);
             document.addEventListener('mouseup', this.mouseup, false);
-            // document.addEventListener(this.wheel, this.mousewheel, false);
-            // document.addEventListener('mouseout', this.mouseout, false);
-            // document.addEventListener('mouseover', this.mouseover, false);            
             this.isbind = true;
         },
         // 移除监听
@@ -153,14 +148,10 @@
             document.removeEventListener('mousedown', this.mousedown, false);
             document.removeEventListener('mousemove', this.mousemove, false);
             document.removeEventListener('mouseup', this.mouseup, false);
-            // document.removeEventListener(this.wheel, this.mousewheel, false);
-            // document.removeEventListener('mouseout', this.mouseout, false);
-            // document.removeEventListener('mouseover', this.mouseover, false);
             this.isbind = false;
         },
         mousedown: function(event) {
             var node = view.searchUp(event.target, GRID_ITEM)
-                // content = view.searchUp(event.target, GRID_ITEM_CONTENT);
             if (node) {
                 dragdrop.dragstart(event, node);
                 var grid = dragdrop.grid;
@@ -187,10 +178,7 @@
                 dragdrop.dragend(event);
             }
         },
-        mousewheel: function(event) {
-            // event.preventDefault();
-            // console.log(event, event.wheelDelta, event.detail);
-        },
+        mousewheel: function(event) {},
         mouseout: function (event) {},
         mouseover: function (event) {}
     };
@@ -216,8 +204,7 @@
                     this.isResize = true;
                 } else {
                     // 如果有拖拽句柄的设置, 但没有选中, 则return
-                    if (this.grid.opt.isDragBar)
-                        return;
+                    if (this.grid.opt.isDragBar) return;
                 }
             }
             this.isDrag = true;
@@ -434,8 +421,6 @@
                 element.setAttribute('data-fg-y', node.y);
                 element.setAttribute('data-fg-w', node.w);
                 element.setAttribute('data-fg-h', node.h);
-                // element.setAttribute('data-fg-min-w', node.minW);
-                // element.setAttribute('data-fg-min-h', node.minH);
                 element.style.cssText += (';transform: translate(' + (node.x * opt.cellW_Int) + 'px,'
                     + (node.y * opt.cellH_Int) + 'px);'
                     + 'width: ' + (node.w * opt.cellW_Int - opt.padding.left - opt.padding.right)  + 'px;'
@@ -629,8 +614,7 @@
                         return node;
                 }
             }
-            // area区域都占满了, 另起一行
-            node.x = 0; 
+            node.x = 0;  // area区域都占满了, 另起一行
             node.y = r;
             return node;
         },
@@ -732,8 +716,6 @@
                 offsetUpY = 0,
                 isResize = isResize || false,
                 checkHit = this.checkHit;
-            // 找到重叠的点
-            // var count = 0;
             // 向下, 向左, 向右插入节点
             if (!isResize) {
                 for (i = 0, len = data.length; i < len; i++) {
@@ -744,8 +726,6 @@
                             offsetUnderY = val;
                             offsetNode = n;
                         }
-                        // console.log('dx='+dx+',dy='+dy+',node.y='+node.y+',node.h='+node.h+',n.id='+n.id+',n.y='+n.y+',n.h='+n.h
-                        //     );
                     }
                 }
                 if (offsetNode) {
@@ -757,11 +737,8 @@
                     if ( difference >= median ) {
                         node.y = node.y + offsetUnderY;
                     }
-                    // console.log('******,difference='+difference+',median='+median+',offsetUnderY='+offsetUnderY
-                    //         +',i='+i+',count='+(++count));
                 }
             }
-            // count = 0;
             // 向上插入节点
             for (i = 0, len = data.length; i < len; i++) {
                 n = data[i];
