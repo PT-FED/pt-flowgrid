@@ -164,8 +164,8 @@
                 var grid = dragdrop.grid;
                 if (grid.opt.draggable) {
                     asyncFun(function() {
-                        isResize ? grid.opt.onResizeStart && grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
-                        : grid.opt.onDragStart && grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);    
+                        isResize ? grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
+                        : grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);    
                     })
                 }
             }
@@ -176,13 +176,12 @@
             }
         },
         mouseup: function (event) {
-            // console.log(dragdrop.isResize, dragdrop.isDrag);
             if (dragdrop.isDrag) {
                 var isResize = dragdrop.isResize;
                 var grid = dragdrop.grid;
                 asyncFun(function() {
-                    isResize ? grid.opt.onResizeEnd && grid.opt.onResizeEnd(event, dragdrop.dragElement, dragdrop.dragNode) 
-                        : grid.opt.onDragEnd && grid.opt.onDragEnd(event, dragdrop.dragElement, dragdrop.dragNode);
+                    isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, dragdrop.dragNode) 
+                        : grid.opt.onDragEnd(event, dragdrop.dragElement, dragdrop.dragNode);
                 });
                 dragdrop.dragend(event);
             }
@@ -205,7 +204,7 @@
             var className = event.target.className;
             // 取得容器和网格对象
             var container = view.searchUp(node, GRID_CONTAINER);
-            this.grid = cache[container.getAttribute(GRID_CONTAINER_INDEX)];
+            var grid = this.grid = cache[container.getAttribute(GRID_CONTAINER_INDEX)];
             // 配置项, 禁用拖拽
             if (!grid.opt.draggable) return;
             // 判断是否拖拽
@@ -215,27 +214,28 @@
                     this.isResize = true;
                 } else {
                     // 如果有拖拽句柄的设置, 但没有选中, 则return
-                    if (this.grid.opt.isDragBar) return;
+                    if (grid.opt.isDragBar) return;
                 }
             }
             this.isDrag = true;
             this.dragElement = node;
             // 取得当前拖拽节点, 并替换当前拖拽节点id
-            var query = this.grid.query(node.getAttribute(GRID_ITEM_DATA_ID));
+            var query = grid.query(node.getAttribute(GRID_ITEM_DATA_ID));
             if (query) {
                 this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_GRAG_DROP;
                 this.dragNode.id = query.node.id;
                 this.dragNode.data = query.node;
                 this.dragNode.data.id = PLACEHOLDER;
                 // 新增占位符
-                var element = this.grid.elements[this.dragNode.data.id] = view.create(this.grid, this.dragNode.data);
-                this.grid.opt.container.appendChild(element);
+                var element = grid.elements[this.dragNode.data.id] = view.create(grid, this.dragNode.data);
+                grid.opt.container.appendChild(element);
             }
         },
         drag: function(event) {
             var self = this;
             if(!self.dragNode.data) return;
-            var opt = self.grid.opt;
+            var grid = self.grid,
+                opt = grid.opt;
             // 计算坐标
             self.prevX || (self.prevX = event.pageX);
             self.prevY || (self.prevY = event.pageY);
@@ -253,12 +253,12 @@
             self.prevY = self.currentY;
             // 判断是不是放大缩小
             if (this.isResize) {
-                this.resize(event, opt, dx, dy);
+                this.resize(event, opt, dx, dy, grid);
             } else {
-                this.changeLocation(event, opt, dx, dy);
+                this.changeLocation(event, opt, dx, dy, grid);
             }
         },
-        changeLocation: function(event, opt, dx, dy) {
+        changeLocation: function(event, opt, dx, dy, grid) {
             var cellW_Int = opt.cellW_Int,
                 cellH_Int = opt.cellH_Int;
             // 相对父元素的坐标x,y
@@ -273,16 +273,15 @@
             var nodeY = Math.round(translateY / cellH_Int);
             // 判断坐标是否变化
             if (this.dragNode.data.x !== nodeX || this.dragNode.data.y !== nodeY) {
-                this.grid.clearNodeInArea(this.grid.area, this.dragNode.data);
+                grid.clearNodeInArea(grid.area, this.dragNode.data);
                 this.dragNode.data.x = nodeX;
                 this.dragNode.data.y = nodeY;
-                // this.scroll(this.dragNode.data); // 滚动条跟随
-                this.grid.checkIndexIsOutOf(this.grid.area, this.dragNode.data);
-                this.grid.overlap(this.grid.data, this.dragNode.data, dx, dy, this.isResize);
-                this.grid.load();
+                grid.checkIndexIsOutOf(grid.area, this.dragNode.data);
+                grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
+                grid.load();
             }
         },
-        resize: function(event, opt, dx, dy) {
+        resize: function(event, opt, dx, dy, grid) {
             var eleW = this.dragElement.clientWidth + dx,
                 eleH = this.dragElement.clientHeight + dy,
                 minW = opt.cellW_Int * this.dragNode.data.minW - opt.padding.left - opt.padding.right,
@@ -296,20 +295,20 @@
             this.dragElement.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
             if (this.dragNode.data.w !== nodeW || this.dragNode.data.h !== nodeH) {
-                //this.scroll(this.dragNode.data); // 滚动条跟随
-                this.grid.clearNodeInArea(this.grid.area, this.dragNode.data);
+                grid.clearNodeInArea(grid.area, this.dragNode.data);
                 this.dragNode.data.w = nodeW;
                 this.dragNode.data.h = nodeH;
-                this.grid.checkIndexIsOutOf(this.grid.area, this.dragNode.data);
-                this.grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
-                this.grid.load();
+                grid.checkIndexIsOutOf(grid.area, this.dragNode.data);
+                grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
+                grid.load();
             }
         },
         dragend: function(event) {
             if(!this.dragNode.data) return;
+            var grid = this.grid;
             this.dragNode.data.id = this.dragNode.id;
             // 替换占位符
-            view.update(this.grid, this.grid.elements[this.dragNode.data.id], this.dragNode.data);
+            view.update(grid, grid.elements[this.dragNode.data.id], this.dragNode.data);
             // 清理临时样式(结束拖拽)
             this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_ANIMATE;
             // 清理临时变量
@@ -324,24 +323,14 @@
             this.currentY = undefined;
             // 移除临时dom(占位符)
             view.remove(PLACEHOLDER);
-            delete this.grid.elements[PLACEHOLDER];
+            delete grid.elements[PLACEHOLDER];
             // 重新计算容器高度
-            var opt = this.grid.opt,
-                maxRowAndCol = this.grid.maxRowAndCol;
-            view.setContainerProperty(opt.container, maxRowAndCol.col * opt.cellW, 
+            var opt = grid.opt,
+                maxRowAndCol = grid.maxRowAndCol;
+            view.setContainerProperty(opt.container, 
+                    maxRowAndCol.col * opt.cellW, 
                     maxRowAndCol.row * opt.cellH,
                     opt.draggable, opt.resizable);
-        },
-        scroll: function(dragNode) {
-            var opt = this.grid.opt,
-                cellH = opt.cellH,
-                y = (dragNode.y + dragNode.h) * cellH,
-                height = document.body.clientHeight;
-            if ( y >= height ) {
-                document.body.scrollTop = document.body.scrollHeight;
-                document.documentElement.scrollTop = document.documentElement.scrollHeight;
-            }
-            console.log(height, y);
         }
     };
 
@@ -505,10 +494,28 @@
                 var arr = view.dom2obj(container, this);
                 if (arr && arr.length > 0) {
                     this.setData(arr);
-                    // view.render(this.data, this.elements, container, this);
                 }
             }
             return this;
+        },
+        destroy: function() {
+            this.originalData = null;
+            this.opt = null;
+            this.area = null;
+            this.data = null;
+            this.elements = null;
+        },
+        loadDom: function(isload) {
+            if (isload === undefined || isload === true) {
+                this.originalData = [];
+                this.area = [];
+                this.data = [];
+                this.elements = {};
+                var arr = view.dom2obj(this.opt.container, this);
+                if (arr && arr.length > 0) {
+                    this.setData(arr);
+                }
+            }
         },
         load: function(isload) {
             if (isload === undefined || isload === true) {
@@ -521,7 +528,8 @@
                     .buildArea(area, this.maxRowAndCol.row, this.maxRowAndCol.col)
                     .putData(area, data)
                     .layout(area, data);
-                view.setContainerProperty(opt.container, this.maxRowAndCol.col * opt.cellW, 
+                view.setContainerProperty(opt.container, 
+                    this.maxRowAndCol.col * opt.cellW, 
                     this.maxRowAndCol.row * opt.cellH,
                     opt.draggable, opt.resizable);
                 view.render(data, elements, opt.container, this);
@@ -841,12 +849,20 @@
         var index = GRID_CONTAINER + cache.count++;
         if (!container.getAttribute(GRID_CONTAINER_INDEX))
             container.setAttribute(GRID_CONTAINER_INDEX, index);
-        return cache[index] = new Grid(options, container, originalData);;
+        cache[index] = new Grid(options, container, originalData);;
+        return cache[index];
+    }
+
+    // 销毁实例
+    function destroy(grid) {
+        delete cache[grid.opt.container.getAttribute(GRID_CONTAINER_INDEX)];
+        grid.destroy();
     }
 
     flowgrid = {
         version: "1.0.2",
-        instance: instance
+        instance: instance,
+        destroy: destroy
     };
 
     return flowgrid;
