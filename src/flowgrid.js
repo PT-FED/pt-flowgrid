@@ -21,27 +21,26 @@
 })(window.pt || window, function (flowgrid) {
 
     // 常量
-    var THROTTLE_TIME = 12;                                // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
-    var MEDIA_QUERY_SMALL = 768;                           // 分辨率768px
-    var MEDIA_QUERY_MID = 992;                             // 分辨率992px
-    var MEDIA_QUERY_BIG = 1200;                            // 分辨率1200px
-    var GRID_ITEM = 'pt-flowgrid-item';                    // 拖拽块classname
-    var GRID_ITEM_ZOOM = 'pt-flowgrid-item-zoom';          // 拖拽块内部放大缩小div的classname
-    var GRID_ITEM_DRAG = 'pt-flowgrid-item-drag';          // 拖拽块可以进行拖拽div的classname
-    var GRID_ITEM_CONTENT = 'pf-flowgrid-item-content';    // 拖拽块的展示内容区div的classname
-    var GRID_ITEM_DRAG_SVG = 'pt-flowgrid-item-drag-svg';  // 拖拽块可以进行拖拽div里面svg的classname
-    var GRID_ITEM_ANIMATE = 'pt-flowgrid-item-animate';    // 拖拽块classname 动画效果
-    var GRID_ITEM_GRAG_DROP = 'pt-flowgrid-item-dragdrop'; // 正在拖拽的块classname
-    var GRID_ITEM_PLACEHOLDER = 'pt-flowgrid-item-placeholder'  // 拖拽块的占位符
-    var GRID_ITEM_DATA_ID = 'data-fg-id';                  // 拖拽块的数据标识id
-    var GRID_CONTAINER = 'pt-flowgrid-container';          // 拖拽容器classname
-    var GRID_CONTAINER_INDEX = 'data-container-index';     // 拖拽容器编号
-    var PLACEHOLDER = 'placeholder';                       // 占位符
+    var THROTTLE_TIME = 12,                                // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
+        MEDIA_QUERY_SMALL = 768,                           // 分辨率768px
+        MEDIA_QUERY_MID = 992,                             // 分辨率992px
+        MEDIA_QUERY_BIG = 1200,                            // 分辨率1200px
+        GRID_ITEM = 'pt-flowgrid-item',                    // 拖拽块classname
+        GRID_ITEM_ZOOM = 'pt-flowgrid-item-zoom',          // 拖拽块内部放大缩小div的classname
+        GRID_ITEM_DRAG = 'pt-flowgrid-item-drag',          // 拖拽块可以进行拖拽div的classname
+        GRID_ITEM_CONTENT = 'pf-flowgrid-item-content',    // 拖拽块的展示内容区div的classname
+        GRID_ITEM_DRAG_SVG = 'pt-flowgrid-item-drag-svg',  // 拖拽块可以进行拖拽div里面svg的classname
+        GRID_ITEM_ANIMATE = 'pt-flowgrid-item-animate',    // 拖拽块classname 动画效果
+        GRID_ITEM_GRAG_DROP = 'pt-flowgrid-item-dragdrop', // 正在拖拽的块classname
+        GRID_ITEM_PLACEHOLDER = 'pt-flowgrid-item-placeholder',  // 拖拽块的占位符
+        GRID_ITEM_DATA_ID = 'data-fg-id',                  // 拖拽块的数据标识id
+        GRID_CONTAINER = 'pt-flowgrid-container',          // 拖拽容器classname
+        GRID_CONTAINER_INDEX = 'data-container-index',     // 拖拽容器编号
+        PLACEHOLDER = 'placeholder';                       // 占位符
 
-    // 网格对象的缓存对象
-    var cache = {
-        count: 0
-    };
+    var cache = {count: 0};                                // 网格对象的缓存对象
+
+    var f = function(){};
 
     // 默认设置
     var setting = {
@@ -69,12 +68,13 @@
             w: 2,
             h: 2
         },
-        onDragStart:function(){},
-        onDragEnd:function(){},
-        onResizeStart:function(){},
-        onResizeEnd:function(){},
-        onAddNode:function(){},
-        onDeleteNode:function(){},
+        onDragStart:f,
+        onDragEnd:f,
+        onResizeStart:f,
+        onResizeEnd:f,
+        onAddNode:f,
+        onDeleteNode:f,
+        onLoad:f
     };
 
     // 属性拷贝
@@ -125,8 +125,8 @@
             id: n.id || id,
             x: n.x,
             y: n.y,
-            w: n.w,
-            h: n.h,
+            w: n.w || n.minW || opt.cellMinW,
+            h: n.h || n.minH || opt.cellMinH,
             minW: n.minW || opt.cellMinW,
             minH: n.minH || opt.cellMinH,
         };
@@ -179,9 +179,10 @@
             if (dragdrop.isDrag) {
                 var isResize = dragdrop.isResize;
                 var grid = dragdrop.grid;
+                var node = grid.clone(dragdrop.dragNode);
                 asyncFun(function() {
-                    isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, dragdrop.dragNode) 
-                        : grid.opt.onDragEnd(event, dragdrop.dragElement, dragdrop.dragNode);
+                    isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, node) 
+                        : grid.opt.onDragEnd(event, dragdrop.dragElement, node);
                 });
                 dragdrop.dragend(event);
             }
@@ -524,7 +525,8 @@
         },
         load: function(isload) {
             if (isload === undefined || isload === true) {
-                var opt = this.opt,
+                var self = this,
+                    opt = this.opt,
                     area = this.area, 
                     data = this.data,
                     elements = this.elements;
@@ -538,6 +540,9 @@
                     this.maxRowAndCol.row * opt.cellH,
                     opt.draggable, opt.resizable);
                 view.render(data, elements, opt.container, this);
+                asyncFun(function(){
+                    self.opt.onLoad && self.opt.onLoad();
+                });
             }
             return this;
         },
@@ -699,7 +704,8 @@
         setDraggable : function(draggable) {
             if (typeof draggable !== 'undefined') {
                 var opt = this.opt,
-                maxRowAndCol = this.maxRowAndCol;
+                    data = this.data,
+                    maxRowAndCol = this.getMaxRowAndCol(opt, data);
                 opt.draggable = !!draggable;
                 view.setContainerProperty(opt.container, 
                     maxRowAndCol.col * opt.cellW, 
@@ -711,8 +717,8 @@
         setResizable: function(resizable) {
             if (typeof resizable !== 'undefined') {
                 var opt = this.opt,
-                maxRowAndCol = this.maxRowAndCol;
-                opt.resizable = !!resizable;
+                    data = this.data,
+                    maxRowAndCol = this.getMaxRowAndCol(opt, data);
                 view.setContainerProperty(opt.container, 
                     maxRowAndCol.col * opt.cellW, 
                     maxRowAndCol.row * opt.cellH,
@@ -867,6 +873,7 @@
     function destroy(grid) {
         delete cache[grid.opt.container.getAttribute(GRID_CONTAINER_INDEX)];
         grid.destroy();
+        grid = null;
     }
 
     flowgrid = {
