@@ -292,9 +292,11 @@
                 minH = opt.cellH_Int * this.dragNode.data.minH - opt.padding.top - opt.padding.bottom,
                 nodeW = Math.ceil(eleW / opt.cellW_Int),
                 nodeH = Math.ceil(eleH / opt.cellH_Int);
-            // 计算最小尺寸
-            eleW < minW && (eleW = minW*0.9);
-            eleH < minH && (eleH = minH*0.9);
+            // 计算最小尺寸, 判断是缩小还是放大
+            if (dx < 0 || dy < 0) {
+                eleW < minW && (eleW = minW*0.9);
+                eleH < minH && (eleH = minH*0.9);    
+            }
             // 设置宽高
             this.dragElement.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
