@@ -39,16 +39,16 @@
         PLACEHOLDER = 'placeholder';                       // 占位符
 
     var cache = {count: 0};                                // 网格对象的缓存对象
-
-    var f = function(){};
-
+    
     // 默认设置
+    var f = function(){};
     var setting = {
         row: 7,
         col: 12,
+        container: null,
+        distance: 10,
         cellMinW: 2,
         cellMinH: 2,
-        container: null,
         draggable: true, 
         resizable: true,
         isDragBar: false,
@@ -316,6 +316,7 @@
             // 清理临时样式(结束拖拽)
             this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_ANIMATE;
             // 清理临时变量
+            this.grid = null;
             this.isDrag = false;
             this.isResize = false;
             this.dragNode.id = undefined;
@@ -330,7 +331,8 @@
             delete grid.elements[PLACEHOLDER];
             // 重新计算容器高度
             var opt = grid.opt,
-                maxRowAndCol = grid.maxRowAndCol;
+                data = grid.data,
+                maxRowAndCol = grid.getMaxRowAndCol(opt, data);
             view.setContainerProperty(opt.container, 
                     maxRowAndCol.col * opt.cellW, 
                     maxRowAndCol.row * opt.cellH,
@@ -604,7 +606,7 @@
         // 取得区域中的最大行和列
         getMaxRowAndCol: function(opt, data) {
             var i, n, len, max = {row: opt.row, col: opt.col};
-            if (data && data.length > 1) {
+            if (data && data.length > 0) {
                 for (i = 0, len = data.length; i < len; i++) {
                     n = data[i];
                     if (n.y + n.h > max.row) {
@@ -719,6 +721,7 @@
                 var opt = this.opt,
                     data = this.data,
                     maxRowAndCol = this.getMaxRowAndCol(opt, data);
+                opt.resizable = !!resizable;
                 view.setContainerProperty(opt.container, 
                     maxRowAndCol.col * opt.cellW, 
                     maxRowAndCol.row * opt.cellH,
