@@ -36,7 +36,7 @@
     .pt-flowgrid-item {
         position: static;
         width: 100% !important;
-        height: 31.25rem !important;
+        height: 27rem !important;
         float: left !important;
         transform: translate(0, 0) !important;
         overflow: hidden;

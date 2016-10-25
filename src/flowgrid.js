@@ -2,7 +2,7 @@
 /**
  * Copyright (c) 2016 tm-roamer
  * https://github.com/PT-FED/pt-flowgrid
- * version: 1.0.1
+ * version: 1.0.3
  * 描述: 可拖拽流式布局
  * 原则和思路:  不依赖任何框架和类库, 通过指定classname进行配置, 实现view层的拖拽, 只和css打交道.
  * 兼容性: ie11+
@@ -899,7 +899,7 @@
     }
 
     flowgrid = {
-        version: "1.0.2",
+        version: "1.0.3",
         instance: instance,
         destroy: destroy
     };
