@@ -154,7 +154,7 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 	<tbody>
 		<tr><td>opt</td><td>配置对象</td></tr>
 		<tr><td>opt.container</td><td>外层容器的dom对象</td></tr>
-		<tr><td>elements</td><td>节点块的集合对象</td></tr>
+		<tr><td>elements</td><td>节点块的dom集合对象</td></tr>
 		<tr><td>area</td><td>网格布局的二维数据</td></tr>
 		<tr><td>data</td><td>渲染数据数组</td></tr>
 		<tr><td>originalData</td><td>原始数据数组(不会修改)</td></tr>
@@ -170,9 +170,9 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>init(opt, container, originalData)</td>
 			<td>初始化</td>
 			<td>
-				参数1: <br/>配置<br/>
-				参数2: <br/>外层容器dom<br/>
-				参数3: <br/>原始数据数组,格式:{x,y,w,h}
+				参数1: 配置对象<br/>
+				参数2: 外层容器dom<br/>
+				参数3: 原始数据数组, <br/>格式:{x,y,w,h}
 			</td>
 			<td>this</td>
 		</tr>
@@ -188,7 +188,7 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>loadDom(isload)</td>
 			<td>重新绘制画布,<br/>遍历dom节点进行渲染</td>
 			<td>
-				参数1: <br/>是否刷新
+				参数1: 是否刷新
 			</td>
 			<td>this</td>
 		</tr>
@@ -196,7 +196,7 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>load(isload)</td>
 			<td>重新绘制画布,<br/>遍历渲染数据,进行重绘</td>
 			<td>
-				参数1: <br/>是否刷新
+				参数1: 是否刷新
 			</td>
 			<td>this</td>
 		</tr>
@@ -206,7 +206,7 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 				计算最小网格宽高
 			</td>
 			<td>
-				参数1: <br/>配置对象
+				参数1: 配置对象
 			</td>
 			<td>this</td>
 		</tr>
@@ -214,8 +214,8 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>setData(originalData, isload)</td>
 			<td>设置数据</td>
 			<td>
-				参数1: <br/>原始数据<br/>
-				参数2: <br/>是否刷新
+				参数1: 原始数据<br/>
+				参数2: 是否刷新
 			</td>
 			<td>this</td>
 		</tr>
@@ -231,9 +231,9 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>buildArea(area, row, col)</td>
 			<td>构建网格区域</td>
 			<td>
-				参数1:<br/>网格布局二维数组<br/>
-				参数2:<br/>行<br/>
-				参数3:<br/>列
+				参数1: 网格布局二维数组<br/>
+				参数2: 行<br/>
+				参数3: 列
 			</td>
 			<td>this</td>
 		</tr>
@@ -241,8 +241,8 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>putData(area, data)</td>
 			<td>将数据铺进网格布局</td>
 			<td>
-				参数1:<br/>网格布局二维数组<br/>
-				参数2:<br/>渲染数据
+				参数1: 网格布局二维数组<br/>
+				参数2: 渲染数据
 			</td>
 			<td>this</td>
 		</tr>
@@ -250,8 +250,8 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>getMaxRowAndCol(opt, data)</td>
 			<td>取得区域中的最大行和列</td>
 			<td>
-				参数1:<br/>配置对象<br/>
-				参数2:<br/>渲染数据
+				参数1: 配置对象<br/>
+				参数2: 渲染数据
 			</td>
 			<td>{row,col}</td>
 		</tr>
@@ -259,8 +259,8 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>add(n, isload)</td>
 			<td>添加节点</td>
 			<td>
-				参数1:<br/>节点数据<br/>
-				参数2:<br/>是否刷新
+				参数1: 节点数据<br/>
+				参数2: 是否刷新
 			</td>
 			<td>新增节点对象</td>
 		</tr>
@@ -268,8 +268,8 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>getVacant(w, h)</td>
 			<td>计算网格的空位,<br/>用于节点x,y赋值</td>
 			<td>
-				参数1:<br/>节点宽<br/>
-				参数2:<br/>节点高
+				参数1: 节点宽<br/>
+				参数2: 节点高
 			</td>
 			<td>节点对象</td>
 		</tr>
@@ -355,11 +355,11 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 			<td>overlap(data, node, dx, dy, isResize)</td>
 			<td>节点重叠,插入节点关键算法</td>
 			<td>
-				参数1: <br/>渲染数据 <br/>
-				参数2: <br/>节点对象 <br/>
-				参数3: <br/>x轴偏移 <br/>
-				参数4: <br/>y轴偏移 <br/>
-				参数5: <br/>是否缩放
+				参数1:  渲染数据 <br/>
+				参数2:  节点对象 <br/>
+				参数3:  x轴偏移 <br/>
+				参数4:  y轴偏移 <br/>
+				参数5:  是否缩放
 			</td>
 			<td>this</td>
 		</tr>
