@@ -38,8 +38,6 @@
         GRID_CONTAINER_INDEX = 'data-container-index',     // 拖拽容器编号
         PLACEHOLDER = 'placeholder';                       // 占位符
 
-    var cache = {count: 0};                                // 网格对象的缓存对象
-    
     // 默认设置
     var f = function(){};
     var setting = {
@@ -75,6 +73,15 @@
         onAddNode:f,
         onDeleteNode:f,
         onLoad:f
+    };
+
+    // 网格对象的缓存对象
+    var cache = {
+        count: 0,
+        getGrid: function(node) {
+            var container = view.searchUp(node, GRID_CONTAINER);
+            return cache[container.getAttribute(GRID_CONTAINER_INDEX)]
+        }
     };
 
     // 属性拷贝
@@ -147,6 +154,7 @@
             document.addEventListener('mousedown', this.mousedown , true);
             document.addEventListener('mousemove', this.mousemove, true);
             document.addEventListener('mouseup', this.mouseup, true);
+            document.addEventListener('click', this.click, true);
             this.isbind = true;
         },
         // 移除监听
@@ -154,6 +162,7 @@
             document.removeEventListener('mousedown', this.mousedown, true);
             document.removeEventListener('mousemove', this.mousemove, true);
             document.removeEventListener('mouseup', this.mouseup, true);
+            document.removeEventListener('click', this.click, true);
             this.isbind = false;
         },
         mousedown: function(event) {
@@ -162,6 +171,9 @@
                 dragdrop.dragstart(event, node);
                 var isResize = dragdrop.isResize;
                 var grid = dragdrop.grid;
+                this.distance = grid.opt.distance;
+                this.pageX = event.pageX;
+                this.pageY = event.pageY;
                 if (grid.opt.draggable) {
                     asyncFun(function() {
                         isResize ? grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
@@ -171,7 +183,9 @@
             }
         },
         mousemove: function (event) {
-            if (dragdrop.isDrag) {
+            var x = Math.abs(event.pageX - this.pageX);
+            var y = Math.abs(event.pageY - this.pageY);
+            if (dragdrop.isDrag && (x >= this.distance || y >= this.distance)) {
                 throttle(new Date().getTime()) && dragdrop.drag(event);
             }
         },
@@ -187,9 +201,13 @@
                 dragdrop.dragend(event);
             }
         },
-        mousewheel: function(event) {},
-        mouseout: function (event) {},
-        mouseover: function (event) {}
+        click: function(event) {
+            var x = Math.abs(event.pageX - this.pageX);
+            var y = Math.abs(event.pageY - this.pageY);
+            if (x >= this.distance || y >= this.distance) {
+                event.stopPropagation();
+            }
+        }
     };
 
     // 拖拽对象
@@ -203,9 +221,8 @@
         dragElement: null,          // 拖拽的dom节点
         dragstart: function(event, node) {
             var className = event.target.className;
-            // 取得容器和网格对象
-            var container = view.searchUp(node, GRID_CONTAINER);
-            var grid = this.grid = cache[container.getAttribute(GRID_CONTAINER_INDEX)];
+            // 取得网格对象
+            var grid = this.grid = cache.getGrid(node);
             // 配置项, 禁用拖拽
             if (!grid.opt.draggable) return;
             // 判断是否拖拽
