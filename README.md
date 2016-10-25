@@ -7,11 +7,10 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
   ![github](https://github.com/tm-roamer/ctopo/blob/master/image/skin.jpg?raw=true "demo2")
 
 ### 简介
-  	引用的插件[gridstack](https://github.com/troolee/gridstack.js)满足不了我们产品的需求, 那就自己写个吧, 一写就是一个月.
+引用的插件[gridstack](https://github.com/troolee/gridstack.js)满足不了我们产品的需求, 那就自己写个吧, 一写就是小一个月.
 
 ### 实现原理
-
-	其实里面就是一个二维数组的网格布局, 数字就是一个个小块, 然后碰撞检测, 上移.
+其实里面就是一个二维数组的网格布局, 数字就是一个个小块, 然后碰撞检测, 上移.
 
 
 		0	0	3	3	-	6	6	9	9	12	12	- 
@@ -30,47 +29,105 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 
 	 	-	-	-	-	-	-	-	-	-	-	-	-
 
-### 使用说明和特点
+### 设计思路
+这个插件的设计原则就是: 就是不依赖任何框架和库, 只和css打交道. 不拆散源码, 提供一个完整的源文件, 扔哪都能用.
 
-	这个插件的设计原则就是: 就是不依赖任何框架和库, 只和css打交道. 不拆散源码, 提供一个完整的源文件, 扔哪都能用.
+### 优点
 
+  	(1) 节点块的top,left使用translate()来计算模拟, 提高了FPS, 可以顺畅60FPS
+  	(2) 优化了节点块上下的拖拽位移算法, 上下拖拽换位操作更顺滑.
+  	(3) 轻量没有依赖, js源码1000行左右, css150行左右, 小家碧玉
+  	(4) 支持require, sea, commonjs
+  	(5) 样式修改简单容易
 
+### 缺点
 
-### 特性, 缺点, 
+	(1) 支持多个面板之间的拖拽
+	(2) 节点块上下左右四个角四个边的拖拽
 
-### 配置说明
-
-### API
-
-基础实例
+### 基础实例
 -----
 		<!DOCTYPE html>
-		<html lang="zh">
+		<html>
 		    <head>
 		      <meta charset="UTF-8">
 		      <title></title>
+		      <script type="text/javascript" src="flowgrid.css"></script>
 		    </head>
 		    <body>
-		      <canvas id="canvas"></canvas>
-		      <script type="text/javascript" src="ctopo.js"></script>
+		      	<!-- 外层容器 -->
+	    		<div class="pt-flowgrid-container">
+		            <!-- 节点块 -->
+		            <div class="pt-flowgrid-item" data-fg-x="0" data-fg-y="0" data-fg-w="4" data-fg-h="2">
+		                <!-- 内容区, 摆放展示内容 -->
+		                <div class="pt-flowgrid-item-content">1</div>
+		                <!-- 放大缩小句柄, 隐藏或删除则不能放大缩小 -->
+		                <div class="pt-flowgrid-item-zoom"></div>
+		            </div>
+	    		</div>
+		      <script type="text/javascript" src="flowgrid.js"></script>
 		      <script type="text/javascript">
-		        //调用ctopo
-		        ctopo({
-				      id:"canvas",    //说明: canvas标签的id,     写法: canvas , #canvas
-				      width:"auto",   //说明: canvas的宽度,       写法: 500,500px,50%,auto 
-				      height:"auto",  //说明: canvas的高度,       写法: 500,500px,50%,auto
-				      style:{	      //说明: 样式省略了.....
-					      global:{},
-					      node:{},
-					      edge:{}
-				      },
-				      layout:{},      //说明: 布局省略了.....
-				      data:{},	      //说明: 数据省略了.....
-				      event:{}	      //说明: 事件回调省略了.....
-				    });
+		      		// 初始化方式一
+		        	var grid = flowgrid.instance();
+		        	// 初始化方式二
+		        	// var grid = flowgrid.instance({各种配置});
+		        	// 初始化方式三
+		        	// var grid = flowgrid.instance({各种配置}, 外层容器dom对象);
+		        	// 初始化方式四
+		        	// var grid = flowgrid.instance({各种配置}, 外层容器dom对象, [原始数据]);
 		      </script>
 		    </body>
 		</html>  
+
+### 配置说明
+
+		<script type="text/javascript">
+      		// 配置参数
+      		var options = {
+      			row: 7,                                            // 网格布局的默认行,默认7行
+		        col: 12,                                           // 网格布局的默认列,默认12列
+		        distance: 10,                                      // 触发拖拽的拖拽距离,默认10px
+		        draggable: true,                                   // 是否允许拖拽, 默认允许
+		        resizable: true,                                   // 是否允许缩放, 默认允许
+		        isDragBar: false,                                  // 是否启用拖拽句柄, 默认不启明
+		        nodeMinW: 2,                                       // 节点块的最小宽度, 默认占2格
+		        nodeMinH: 2,                                       // 节点块的最小高度, 默认占2格
+		        padding: {                                         // 节点块之间的间距, 默认都为5px
+		            top: 5,
+		            left: 5,
+		            right: 5,
+		            bottom: 5   
+		        },
+		        cellScale: {                                       // 单元格的宽高比例, 默认16:9
+		            w: 16,
+		            h: 9
+		        },
+		        // 回调函数, 开始拖拽
+		        onDragStart: function(event, element, node) {
+		        	// event 	事件对象
+		        	// element 	节点块的dom对象
+		        	// node  	节点块的数据对象
+		        },
+                // 回调函数, 结束拖拽
+                onDragEnd: function(event, element, node) {},
+                // 回调函数, 开始缩放
+                onResizeStart: function(event, element, node) {},
+                // 回调函数, 结束拖拽
+                onResizeEnd: function(event, element, node) {},
+                // 回调函数, 添加节点
+                onAddNode: function(element, node) {},
+                // 回调函数, 删除节点
+                onDeleteNode: function(element, node) {},
+                // 回调函数, 重新加载
+                onLoad: function() {}
+      		};
+      		// 初始化
+        	var grid = flowgrid.instance(options);
+      </script>
+
+### API
+
+
   
 
 api接口

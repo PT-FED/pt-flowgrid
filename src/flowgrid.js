@@ -41,38 +41,38 @@
     // 默认设置
     var f = function(){};
     var setting = {
-        row: 7,
-        col: 12,
-        container: null,
-        distance: 10,
-        cellMinW: 2,
-        cellMinH: 2,
-        draggable: true, 
-        resizable: true,
-        isDragBar: false,
-        padding: {
+        row: 7,                                            // 网格布局的默认行,默认7行
+        col: 12,                                           // 网格布局的默认列,默认12列
+        container: null,                                   // 网格容器的dom对象
+        distance: 10,                                      // 触发拖拽的拖拽距离,默认10px
+        draggable: true,                                   // 是否允许拖拽, 默认允许
+        resizable: true,                                   // 是否允许缩放, 默认允许
+        isDragBar: false,                                  // 是否启用拖拽句柄, 默认不启明
+        nodeMinW: 2,                                       // 节点块的最小宽度, 默认占2格
+        nodeMinH: 2,                                       // 节点块的最小高度, 默认占2格
+        padding: {                                         // 节点块之间的间距, 默认都为5px
             top: 5,
             left: 5,
             right: 5,
             bottom: 5   
         },
-        cellScale: {
+        cellScale: {                                       // 单元格的宽高比例, 默认16:9
             w: 16,
             h: 9
         },
-        autoAddCell: {
+        autoAddCell: {                                     // 自动添加节点的默认数据
             x: 0,
             y: 0,
             w: 2,
             h: 2
         },
-        onDragStart:f,
-        onDragEnd:f,
-        onResizeStart:f,
-        onResizeEnd:f,
-        onAddNode:f,
-        onDeleteNode:f,
-        onLoad:f
+        onDragStart:f,                                     // 回调函数, 开始拖拽
+        onDragEnd:f,                                       // 回调函数, 结束拖拽
+        onResizeStart:f,                                   // 回调函数, 开始缩放
+        onResizeEnd:f,                                     // 回调函数, 结束拖拽
+        onAddNode:f,                                       // 回调函数, 添加节点
+        onDeleteNode:f,                                    // 回调函数, 删除节点
+        onLoad:f                                           // 回调函数, 重新加载
     };
 
     // 网格对象的缓存对象
@@ -132,10 +132,10 @@
             id: n.id || id,
             x: n.x,
             y: n.y,
-            w: n.w || n.minW || opt.cellMinW,
-            h: n.h || n.minH || opt.cellMinH,
-            minW: n.minW || opt.cellMinW,
-            minH: n.minH || opt.cellMinH,
+            w: n.w || n.minW || opt.nodeMinW,
+            h: n.h || n.minH || opt.nodeMinH,
+            minW: n.minW || opt.nodeMinW,
+            minH: n.minH || opt.nodeMinH,
         };
         return node;
     }
