@@ -29,6 +29,8 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 
 	 	-	-	-	-	-	-	-	-	-	-	-	-
 
+   ![github](https://github.com/PT-FED/pt-flowgrid/blob/master/doc/demo.png?raw=true "demo")
+
 ### 设计思路
 这个插件的设计原则就是: 就是不依赖任何框架和库, 只和css打交道. 不拆散源码, 提供一个完整的源文件, 扔哪都能用.
 
