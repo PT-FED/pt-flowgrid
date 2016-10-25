@@ -3,8 +3,8 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 
 ### 先上图,再逼逼
   
-  ![github](https://github.com/tm-roamer/ctopo/blob/master/image/demo.png?raw=true "demo1")
-  ![github](https://github.com/tm-roamer/ctopo/blob/master/image/skin.jpg?raw=true "demo2")
+  ![github](https://github.com/PT-FED/pt-flowgrid/blob/master/doc/demo_small_1.gif?raw=true "demo")
+  ![github](https://github.com/PT-FED/pt-flowgrid/blob/master/doc/demo_small_2.gif?raw=true "demo")
 
 ### 简介
 引用的插件[gridstack](https://github.com/troolee/gridstack.js)满足不了我们产品的需求, 那就自己写个吧, 一写就是小一个月.
