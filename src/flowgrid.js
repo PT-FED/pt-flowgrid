@@ -531,6 +531,7 @@
             this.area = null;
             this.data = null;
             this.elements = null;
+            return this;
         },
         loadDom: function(isload) {
             if (isload === undefined || isload === true) {
@@ -543,6 +544,7 @@
                     this.setData(arr);
                 }
             }
+            return this;
         },
         load: function(isload) {
             if (isload === undefined || isload === true) {
@@ -577,7 +579,7 @@
             opt.cellH_Int = Math.floor(opt.cellH);
             return this;
         },
-        // 初始化数据
+        // 设置数据
         setData: function(originalData, isload) {
             // 遍历原始数据
             if (originalData && Array.isArray(originalData)) {
@@ -609,7 +611,7 @@
             }
             return this;
         },
-        // 铺数据
+        // 将数据铺进网格布局
         putData: function(area, data) {
             var i, r, c, len, rlen, clen, node;
             for (i = 0, len = data.length; i < len; i++) {
@@ -702,6 +704,7 @@
             asyncFun(function(){
                 self.opt.onDeleteNode && self.opt.onDeleteNode(self.elements[id], arr[0]);
             });
+            return arr[0];
         },
         edit: function(n, isload) {
             var node = this.query(n.id).node;
@@ -748,7 +751,7 @@
             }
             return this;
         },
-        // 处理脏数据
+        // 检测脏数据
         checkIndexIsOutOf: function(area, node) {
             var row = area.length,
                 col = (area[0] && area[0].length) || this.opt.col;
@@ -865,10 +868,10 @@
                 for (c = node.x, clen = node.x + node.w; c < clen; c++)
                     area[r] && (area[r][c] = undefined);
         },
-        clone: function(mod) {
+        clone: function(node) {
             var obj = {};
-            for(var attr in mod)
-                if (mod.hasOwnProperty(attr)) 
+            for(var attr in node)
+                if (node.hasOwnProperty(attr)) 
                     obj[attr] = mod[attr];
             return obj;
         }

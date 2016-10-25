@@ -42,11 +42,11 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 
 ### 缺点
 
-	(1) 支持多个面板之间的拖拽
+	(1) 不支持多个面板之间的拖拽
 	(2) 节点块上下左右四个角四个边的拖拽
 
 ### 基础实例
------
+
 		<!DOCTYPE html>
 		<html>
 		    <head>
@@ -74,7 +74,7 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 		        	// 初始化方式三
 		        	// var grid = flowgrid.instance({各种配置}, 外层容器dom对象);
 		        	// 初始化方式四
-		        	// var grid = flowgrid.instance({各种配置}, 外层容器dom对象, [原始数据]);
+		        	// var grid = flowgrid.instance({各种配置}, 外层容器dom对象, [原始数据,格式:{x,y,w,h}]);
 		      </script>
 		    </body>
 		</html>  
@@ -127,30 +127,37 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
 
 ### API
 
-
-  
-
-api接口
------
-### 使用方法
-		//取得ctopo对象, 点出api方法即可
-		var ctopo = ctopo({..各种基础配置..});
-		var nodeA = ctopo.node("1108"); //获取节点A
-		var nodeB = ctopo.node("0724"); //获取节点B
-		var edge = ctopo.edge("1108","0724"); //获取连线
+	使用方法
+		//取得flowgrid对象, 点出api方法即可
+		var grid = flowgrid.instance({..各种基础配置..}, undefined, [格式:{x,y,w,h}])
+		grid.area; // 取得布局网格二维数组
+		grid.data; // 取得所有渲染数据
 		
-### 属性和方法
+
+### flowgrid对象的属性和方法
+<table>
+	<thead>
+		<tr><td>名称</td><td>类型</td><td>描述</td></tr>
+	</thead>
+	<tbody>
+		<tr><td>version</td><td>属性</td><td>版本</td></tr>
+		<tr><td>instance</td><td>方法</td><td>构建实例</td></tr>
+		<tr><td>destroy</td><td>方法</td><td>销毁实例</td></tr>
+	</tbody>
+</table>
+
+### flowgrid实例的属性和方法
 <table>
 	<thead>
 		<tr><td>属性名</td><td>描述</td></tr>
 	</thead>
 	<tbody>
-		<tr><td>version</td><td>版本</td></tr>
-		<tr><td>option</td><td>配置对象</td></tr>
-		<tr><td>canvas</td><td>画布对象</td></tr>
-		<tr><td>context</td><td>画布上下文对象</td></tr>
-		<tr><td>nodes</td><td>节点数组</td></tr>
-		<tr><td>edges</td><td>连线对象</td></tr>
+		<tr><td>opt</td><td>配置对象</td></tr>
+		<tr><td>opt.container</td><td>外层容器的dom对象</td></tr>
+		<tr><td>elements</td><td>节点块的集合对象</td></tr>
+		<tr><td>area</td><td>网格布局的二维数据</td></tr>
+		<tr><td>data</td><td>渲染数据数组</td></tr>
+		<tr><td>originalData</td><td>原始数据数组(不会修改)</td></tr>
 	</tbody>
 </table>
 
@@ -160,226 +167,249 @@ api接口
 	</thead>
 	<tbody>
 		<tr>
-			<td>addEdge(edge,isDrawNow)</td>
-			<td>添加连线</td>
+			<td>init(opt, container, originalData)</td>
+			<td>初始化</td>
 			<td>
-				参数1: <br/>edge添加的连线对象<br/>
-				参数2: <br/>isDrawNow是否立刻渲染到屏幕
+				参数1: <br/>配置<br/>
+				参数2: <br/>外层容器dom<br/>
+				参数3: <br/>原始数据数组,格式:{x,y,w,h}
 			</td>
-			<td>空</td>
+			<td>this</td>
 		</tr>
 		<tr>
-			<td>addNode(node,isDrawNow)</td>
+			<td>destroy()</td>
+			<td>注销</td>
+			<td>
+				无参
+			</td>
+			<td>this</td>
+		</tr>
+		<tr>
+			<td>loadDom(isload)</td>
+			<td>重新绘制画布,<br/>遍历dom节点进行渲染</td>
+			<td>
+				参数1: <br/>是否刷新
+			</td>
+			<td>this</td>
+		</tr>
+		<tr>
+			<td>load(isload)</td>
+			<td>重新绘制画布,<br/>遍历渲染数据,进行重绘</td>
+			<td>
+				参数1: <br/>是否刷新
+			</td>
+			<td>this</td>
+		</tr>
+		<tr>
+			<td>computeCellScale(opt)</td>
+			<td>
+				计算最小网格宽高
+			</td>
+			<td>
+				参数1: <br/>配置对象
+			</td>
+			<td>this</td>
+		</tr>
+		<tr>
+			<td>setData(originalData, isload)</td>
+			<td>设置数据</td>
+			<td>
+				参数1: <br/>原始数据<br/>
+				参数2: <br/>是否刷新
+			</td>
+			<td>this</td>
+		</tr>
+		<tr>
+			<td>sortData(data)</td>
+			<td>渲染数据排序</td>
+			<td>
+				参数1: <br/>渲染数据
+			</td>
+			<td>this</td>
+		</tr>
+		<tr>
+			<td>buildArea(area, row, col)</td>
+			<td>构建网格区域</td>
+			<td>
+				参数1:<br/>网格布局二维数组<br/>
+				参数2:<br/>行<br/>
+				参数3:<br/>列
+			</td>
+			<td>this</td>
+		</tr>
+		<tr>
+			<td>putData(area, data)</td>
+			<td>将数据铺进网格布局</td>
+			<td>
+				参数1:<br/>网格布局二维数组<br/>
+				参数2:<br/>渲染数据
+			</td>
+			<td>this</td>
+		</tr>
+		<tr>
+			<td>getMaxRowAndCol(opt, data)</td>
+			<td>取得区域中的最大行和列</td>
+			<td>
+				参数1:<br/>配置对象<br/>
+				参数2:<br/>渲染数据
+			</td>
+			<td>{row,col}</td>
+		</tr>
+		<tr>
+			<td>add(n, isload)</td>
 			<td>添加节点</td>
 			<td>
-				参数1: <br/>edge添加的节点对象<br/>
-				参数2: <br/>isDrawNow是否立刻渲染到屏幕
+				参数1:<br/>节点数据<br/>
+				参数2:<br/>是否刷新
 			</td>
-			<td>空</td>
+			<td>新增节点对象</td>
 		</tr>
 		<tr>
-			<td>draw(option)</td>
-			<td>重新绘制画布,<br/>用法等于ctopo(option)</td>
+			<td>getVacant(w, h)</td>
+			<td>计算网格的空位,<br/>用于节点x,y赋值</td>
 			<td>
-				参数1: <br/>option初始的配置对象
+				参数1:<br/>节点宽<br/>
+				参数2:<br/>节点高
 			</td>
-			<td>空</td>
+			<td>节点对象</td>
 		</tr>
 		<tr>
-			<td>drawData(data,isApplyLayout)</td>
-			<td>局部刷新,只刷新数据</td>
+			<td>addAutoNode(area, node)</td>
+			<td>自动扫描空位添加节点</td>
 			<td>
-				参数1: <br/>data格式=optioin.data<br/>
-				参数2: <br/>isApplyLayout是否重新应用布局
+				参数1:<br/>网格布局二维数组<br/>
+				参数2:<br/>节点对象
 			</td>
-			<td>成功true,失败false</td>
+			<td>传入节点对象</td>
 		</tr>
 		<tr>
-			<td>edge(sid,tid)</td>
+			<td>collision(area, node)</td>
+			<td>碰撞检测</td>
 			<td>
-				取得连线对象<br/>
-				ps:区分方向
+				参数1:<br/>网格布局二维数组<br/>
+				参数2:<br/>节点对象
 			</td>
-			<td>
-				参数1: <br/>开始节点id<br/>
-				参数2: <br/>结束节点id
-			</td>
-			<td>
-				查到: 连线对象 <br/>
-				没查到: null
-			</td>
+			<td>true碰撞, false未碰撞</td>
 		</tr>
 		<tr>
-			<td>edgeArray()</td>
-			<td>取得所有的连线对象数组</td>
+			<td>delete(id, isload)</td>
+			<td>删除节点</td>
 			<td>
-				无
+				参数1:<br/>节点id<br/>
+				参数2:<br/>是否刷新
 			</td>
-			<td>连线对象数组</td>
+			<td>被删除节点对象</td>
 		</tr>
 		<tr>
-			<td>firstNeighbors(nid)</td>
-			<td>返回与之关联的连线和节点数组对象</td>
+			<td>edit(n, isload)</td>
+			<td>编辑节点</td>
 			<td>
-				参数1: <br/>nid待匹配的节点id
+				参数1:<br/>节点对象<br/>
+				参数2:<br/>是否刷新
 			</td>
-			<td>查到:关联数据对象;<br/>
-				没查到:空数组对象<br/>
-				{<br/>
-				edgeNeighbors:[],<br/>
-				nodeNeighbors:[]<br/>
-				}<br/>
-			</td>
+			<td>被编辑节点</td>
 		</tr>
 		<tr>
-			<td>layout(layout)</td>
-			<td>重置切换布局</td>
-			<td>
-				(可选)参数1:<br/> layout==option.layout
-			</td>
-			<td>
-				无参数:<br/> 返回option.layout<br/>
-				有参数:<br/> 重置布局,<br/>成功true,失败false
-			</td>
-		</tr>
-		<tr>
-			<td>node(id)</td>
-			<td>取得节点对象</td>
+			<td>query(id)</td>
+			<td>查询节点</td>
 			<td>
 				参数1: <br/>节点id
 			</td>
-			<td>
-				查到:节点对象<br/>
-				没查到:null
-			</td>
+			<td>{index,node}</td>
 		</tr>
 		<tr>
-			<td>nodeLabelsVisible(visible)</td>
-			<td>设置节点标签是否显示</td>
+			<td>setDraggable(draggable)</td>
+			<td>设置是否可以拖拽</td>
 			<td>
-				参数1: <br/>visible是否显示标签,<br/>布尔型true,false
+				参数1: <br/>拖拽状态true,false<br/>
 			</td>
-			<td>空</td>
+			<td>this</td>
 		</tr>
 		<tr>
-			<td>edgeLabelsVisible(visible)</td>
-			<td>设置连线标签是否显示</td>
+			<td>setResizable(resizable)</td>
+			<td>设置是否可以缩放</td>
 			<td>
-				参数1: <br/>visible是否显示标签,<br/>布尔型true,false
+				参数1: <br/>缩放状态true,false<br/>
 			</td>
-			<td>空</td>
+			<td>this</td>
 		</tr>
 		<tr>
-			<td>edgeArrowsVisible(visible)</td>
-			<td>设置连线箭头是否显示</td>
+			<td>checkIndexIsOutOf(area, node)</td>
+			<td>检测脏数据,下标越界</td>
 			<td>
-				参数1: <br/>visible是否显示箭头,<br/>布尔型true,false
+				参数1:<br/>网格布局二维数组<br/>
+				参数2:<br/>节点对象
 			</td>
-			<td>空</td>
+			<td>this</td>
 		</tr>
 		<tr>
-			<td>nodeArray()</td>
-			<td>取得所有节点对象数组</td>
+			<td>checkHit(n, node)</td>
+			<td>矩形碰撞检测</td>
 			<td>
-				无
+				参数1: <br/>节点对象1 <br/>
+				参数2: <br/>节点对象2
 			</td>
-			<td>节点对象数组</td>
+			<td>true碰撞, false未碰撞</td>
 		</tr>
 		<tr>
-			<td>nodeTooltipsVisible(visible)</td>
-			<td>设置节点提示框是否显示</td>
+			<td>overlap(data, node, dx, dy, isResize)</td>
+			<td>节点重叠,插入节点关键算法</td>
 			<td>
-				参数1: <br/>visible是否显示提示框,<br/>布尔型true,false
+				参数1: <br/>渲染数据 <br/>
+				参数2: <br/>节点对象 <br/>
+				参数3: <br/>x轴偏移 <br/>
+				参数4: <br/>y轴偏移 <br/>
+				参数5: <br/>是否缩放
 			</td>
-			<td>空</td>
+			<td>this</td>
 		</tr>
 		<tr>
-			<td>edgeTooltipsVisible(visible)</td>
-			<td>设置连线提示框是否显示</td>
+			<td>layout(area, data)</td>
+			<td>流布局算法</td>
 			<td>
-				参数1: <br/>visible是否显示提示框,<br/>布尔型true,false
+				参数1: <br/>网格布局二维数组 <br/>
+				参数2: <br/>渲染数据
 			</td>
-			<td>空</td>
+			<td>this</td>
 		</tr>
 		<tr>
-			<td>edgeAnimateBallsVisible(visible)</td>
-			<td>设置连线动画球是否显示</td>
+			<td>findEmptyLine(area, node)</td>
+			<td>寻找空行</td>
 			<td>
-				参数1: <br/>visible是否显示动画球,<br/>布尔型true,false
+				参数1: <br/>网格布局二维数组 <br/>
+				参数2: <br/>节点对象
 			</td>
-			<td>空</td>
+			<td>找到最接近顶部的空行号</td>
 		</tr>
 		<tr>
-			<td>consolePanelVisible(visible)</td>
-			<td>设置控制台是否显示</td>
+			<td>moveUp(area, node, newRow)</td>
+			<td>上移</td>
 			<td>
-				参数1: <br/>visible是否显示控制台,<br/>布尔型true,false
+				参数1: <br/>网格布局二维数组 <br/>
+				参数2: <br/>节点对象<br/>
+				参数3: <br/>新行,给node.y赋值
 			</td>
-			<td>空</td>
+			<td>无</td>
 		</tr>
 		<tr>
-			<td>removeEdge(sid,tid,isDrawNow)</td>
-			<td>删除连线</td>
+			<td>clearNodeInArea(area, node)</td>
+			<td>清除区域中的节点</td>
 			<td>
-				参数1: <br/>开始节点id <br/>
-				参数2: <br/>结束节点id <br/>
-				参数3: <br/>是否立刻渲染到屏幕
+				参数1: <br/>网格布局二维数组 <br/>
+				参数2: <br/>节点对象
 			</td>
-			<td>空</td>
+			<td>无</td>
 		</tr>
 		<tr>
-			<td>removeNode(id,isDrawNow)</td>
-			<td>删除节点,与之关联的线也删除</td>
+			<td>clone(node)</td>
+			<td>克隆节点</td>
 			<td>
-				参数1: <br/>节点id <br/>
-				参数2: <br/>是否立刻渲染到屏幕
+				参数1: <br/>节点对象
 			</td>
-			<td>空</td>
-		</tr>
-		<tr>
-			<td>updateEdge(edge,isDrawNow)</td>
-			<td>更新连线</td>
-			<td>
-				参数1: <br/>连线对象 <br/>
-				参数3: <br/>是否立刻渲染到屏幕
-			</td>
-			<td>空</td>
-		</tr>
-		<tr>
-			<td>updateNode(node,isDrawNow)</td>
-			<td>更新节点</td>
-			<td>
-				参数1: <br/>节点对象 <br/>
-				参数2: <br/>是否立刻渲染到屏幕
-			</td>
-			<td>空</td>
-		</tr>
-		<tr>
-			<td>style(style)</td>
-			<td>重置切换样式</td>
-			<td>
-				(可选)参数1: <br/>style==option.style
-			</td>
-			<td>
-				无参数: <br/>返回option.style
-				有参数: <br/>重置样式,<br/>成功true,失败false
-			</td>
-		</tr>
-		<tr>
-			<td>zoom(scale)</td>
-			<td>设置缩放比例(0-1)</td>
-			<td>
-				(可选)参数1: <br/>scale比例0-1,100%=0.5<br/>
-			</td>
-			<td>
-				无参数:<br/> 返回比例值<br/>
-				有参数:<br/> 设置比例值,<br/>成功ture,失败false
-			</td>
+			<td>克隆节点对象</td>
 		</tr>
 	</tbody>
 </table>
-
-
   
 ### 版权
   MIT
