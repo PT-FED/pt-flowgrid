@@ -872,7 +872,7 @@
             var obj = {};
             for(var attr in node)
                 if (node.hasOwnProperty(attr)) 
-                    obj[attr] = mod[attr];
+                    obj[attr] = node[attr];
             return obj;
         }
     };
