@@ -272,21 +272,21 @@
             // 当前坐标变成上一次的坐标
             self.prevX = self.currentX;
             self.prevY = self.currentY;
-            // 判断是不是放大缩小
-            if (this.isResize) {
-                this.resize(event, opt, dx, dy, grid);
-            } else {
-                this.changeLocation(event, opt, dx, dy, grid);
-            }
-        },
-        changeLocation: function(event, opt, dx, dy, grid) {
-            var cellW_Int = opt.cellW_Int,
-                cellH_Int = opt.cellH_Int;
             // 相对父元素的坐标x,y
             var translate = this.dragElement.style.transform;
             var value = translate.replace(/translate.*\(/ig, '').replace(/\).*$/ig, '').replace(/px/ig, '').split(',');
             var translateX = value[0]*1;
             var translateY = value[1]*1;
+            // 判断是不是放大缩小
+            if (this.isResize) {
+                this.resize(event, opt, dx, dy, translateX, translateY, grid);
+            } else {
+                this.changeLocation(event, opt, dx, dy, translateX, translateY, grid);
+            }
+        },
+        changeLocation: function(event, opt, dx, dy, translateX, translateY, grid) {
+            var cellW_Int = opt.cellW_Int,
+                cellH_Int = opt.cellH_Int;
             // 计算坐标
             this.dragElement.style.cssText += ';transform: translate(' + (translateX + dx) + 'px,' + (translateY + dy) + 'px);';
             // 当前拖拽节点的坐标, 转换成对齐网格的坐标
@@ -302,18 +302,21 @@
                 grid.load();
             }
         },
-        resize: function(event, opt, dx, dy, grid) {
+        resize: function(event, opt, dx, dy, translateX, translateY, grid) {
             var eleW = this.dragElement.clientWidth + dx,
                 eleH = this.dragElement.clientHeight + dy,
-                minW = opt.cellW_Int * this.dragNode.data.minW - opt.padding.left - opt.padding.right,
-                minH = opt.cellH_Int * this.dragNode.data.minH - opt.padding.top - opt.padding.bottom,
                 nodeW = Math.ceil(eleW / opt.cellW_Int),
                 nodeH = Math.ceil(eleH / opt.cellH_Int);
             // 计算最小尺寸, 判断是缩小还是放大
             if (dx < 0 || dy < 0) {
+                var minW = opt.cellW_Int * this.dragNode.data.minW - opt.padding.left - opt.padding.right,
+                    minH = opt.cellH_Int * this.dragNode.data.minH - opt.padding.top - opt.padding.bottom;
                 eleW < minW && (eleW = minW*0.9);
-                eleH < minH && (eleH = minH*0.9);    
+                eleH < minH && (eleH = minH*0.9); 
             }
+            // 判断最大宽度
+            var maxW = opt.container.clientWidth;
+            translateX + eleW > maxW && (eleW = maxW - translateX);
             // 设置宽高
             this.dragElement.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
