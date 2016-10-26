@@ -297,7 +297,7 @@
                 grid.clearNodeInArea(grid.area, this.dragNode.data);
                 this.dragNode.data.x = nodeX;
                 this.dragNode.data.y = nodeY;
-                grid.checkIndexIsOutOf(grid.area, this.dragNode.data);
+                grid.checkIndexIsOutOf(grid.area, this.dragNode.data, this.isResize);
                 grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
                 grid.load();
             }
@@ -321,7 +321,7 @@
                 grid.clearNodeInArea(grid.area, this.dragNode.data);
                 this.dragNode.data.w = nodeW;
                 this.dragNode.data.h = nodeH;
-                grid.checkIndexIsOutOf(grid.area, this.dragNode.data);
+                grid.checkIndexIsOutOf(grid.area, this.dragNode.data, this.isResize);
                 grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
                 grid.load();
             }
@@ -752,13 +752,17 @@
             return this;
         },
         // 检测脏数据
-        checkIndexIsOutOf: function(area, node) {
+        checkIndexIsOutOf: function(area, node, isResize) {
             var row = area.length,
                 col = (area[0] && area[0].length) || this.opt.col;
             // 数组下标越界检查
             node.x < 0 && (node.x = 0);
             node.y < 0 && (node.y = 0);
-            node.x + node.w > col && (node.x = col - node.w);
+            if (isResize) {
+                node.x + node.w > col && (node.w = col - node.x);
+            } else {
+                node.x + node.w > col && (node.x = col - node.w);    
+            }
             return this;
         },
         // 检测矩形碰撞
