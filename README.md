@@ -118,7 +118,7 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
                 onDragEnd: function(event, element, node) {},
                 // 回调函数, 开始缩放
                 onResizeStart: function(event, element, node) {},
-                // 回调函数, 结束拖拽
+                // 回调函数, 结束缩放
                 onResizeEnd: function(event, element, node) {},
                 // 回调函数, 添加节点
                 onAddNode: function(element, node) {},
@@ -131,9 +131,8 @@ flowgrid.js is a plugin for widget layout, 一个轻量简单的网格流布局�
         	var grid = flowgrid.instance(options);
       </script>
 
-### API
+### API使用示例
 
-	使用方法
 		//取得flowgrid对象, 点出api方法即可
 		var grid = flowgrid.instance({..各种基础配置..}, undefined, [格式:{x,y,w,h}])
 		grid.area; // 取得布局网格二维数组
