@@ -35,6 +35,8 @@
         GRID_ITEM_PLACEHOLDER = 'pt-flowgrid-item-placeholder',  // 拖拽块的占位符
         GRID_ITEM_DATA_ID = 'data-fg-id',                  // 拖拽块的数据标识id
         GRID_CONTAINER = 'pt-flowgrid-container',          // 拖拽容器classname
+        GRID_CONTAINER_DRAGGABLE = 'data-fg-draggable',    // 拖拽容器拖拽属性
+        GRID_CONTAINER_RESIZABLE = 'data-fg-resizable',    // 拖拽容器缩放属性
         GRID_CONTAINER_INDEX = 'data-container-index',     // 拖拽容器编号
         PLACEHOLDER = 'placeholder';                       // 占位符
 
@@ -219,7 +221,7 @@
         isResize: false,            // 是否放大缩小
         dragNode: {                 // 拖拽节点的的关联数据
             id: undefined,          // 拖拽节点的id
-            data: null,             // 占位符节点的关联数据
+            node: null,             // 占位符节点的关联数据
         },
         dragElement: null,          // 拖拽的dom节点
         dragstart: function(event, node) {
@@ -248,16 +250,16 @@
             if (query) {
                 this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_GRAG_DROP;
                 this.dragNode.id = query.node.id;
-                this.dragNode.data = query.node;
-                this.dragNode.data.id = PLACEHOLDER;
+                this.dragNode.node = query.node;
+                this.dragNode.node.id = PLACEHOLDER;
                 // 新增占位符
-                var element = grid.elements[this.dragNode.data.id] = view.create(grid, this.dragNode.data);
+                var element = grid.elements[this.dragNode.node.id] = view.create(grid, this.dragNode.node);
                 grid.opt.container.appendChild(element);
             }
         },
         drag: function(event) {
             var self = this;
-            if(!self.dragNode.data) return;
+            if(!self.dragNode.node) return;
             var grid = self.grid,
                 opt = grid.opt;
             // 计算坐标
@@ -274,11 +276,11 @@
             // 当前坐标变成上一次的坐标
             self.prevX = self.currentX;
             self.prevY = self.currentY;
-            // 相对父元素的坐标x,y
-            var translate = this.dragElement.style.transform;
-            var value = translate.replace(/translate.*\(/ig, '').replace(/\).*$/ig, '').replace(/px/ig, '').split(',');
-            var translateX = value[0]*1;
-            var translateY = value[1]*1;
+            // 相对父元素的偏移坐标x,y
+            var translate = this.dragElement.style.transform,
+                value = translate.replace(/translate.*\(/ig, '').replace(/\).*$/ig, '').replace(/px/ig, '').split(','),
+                translateX = value[0]*1,
+                translateY = value[1]*1;
             // 判断是不是放大缩小
             if (this.isResize) {
                 this.resize(event, opt, dx, dy, translateX, translateY, grid);
@@ -287,7 +289,8 @@
             }
         },
         changeLocation: function(event, opt, dx, dy, translateX, translateY, grid) {
-            var cellW_Int = opt.cellW_Int,
+            var node = this.dragNode.node,
+                cellW_Int = opt.cellW_Int,
                 cellH_Int = opt.cellH_Int;
             // 计算坐标
             this.dragElement.style.cssText += ';transform: translate(' + (translateX + dx) + 'px,' + (translateY + dy) + 'px);';
@@ -295,18 +298,18 @@
             var nodeX = Math.round(translateX / cellW_Int);
             var nodeY = Math.round(translateY / cellH_Int);
             // 判断坐标是否变化
-            if (this.dragNode.data.x !== nodeX || this.dragNode.data.y !== nodeY) {
-                grid.clearNodeInArea(grid.area, this.dragNode.data);
-                this.dragNode.data.x = nodeX;
-                this.dragNode.data.y = nodeY;
-                grid.checkIndexIsOutOf(grid.area, this.dragNode.data, this.isResize);
-                grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
+            if (node.x !== nodeX || node.y !== nodeY) {
+                grid.clearNodeInArea(grid.area, node);
+                node.x = nodeX;
+                node.y = nodeY;
+                grid.checkIndexIsOutOf(grid.area, node, this.isResize);
+                grid.overlap(grid.data, node, dx, dy, this.isResize);
                 grid.load();
             }
         },
         resize: function(event, opt, dx, dy, translateX, translateY, grid) {
             var ele = this.dragElement,
-                node = this.dragNode.data,
+                node = this.dragNode.node,
                 container = opt.container,
                 containerX = container.offsetLeft,
                 containerY = container.offsetTop,
@@ -316,21 +319,17 @@
                 minH = node.minH * opt.cellH_Int - opt.padding.top - opt.padding.bottom,
                 eventW = event.pageX - containerX - translateX,
                 eventH = event.pageY - containerY - translateY;
-
             var eleW = eventW, 
                 eleH = eventH;
             // 判断最小宽
-            if (eventW < minW) {
+            if (eventW < minW)
                 eleW = minW * 0.9;
-            }
             // 判断最小高
-            if (eventH < minH) {
+            if (eventH < minH)
                 eleH = minH * 0.9;
-            }
             // 判断最大宽
-            if ( eventW + translateX > maxW) {
+            if ( eventW + translateX > maxW)
                 eleW = maxW - translateX
-            }
             // 设置宽高
             ele.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
@@ -346,11 +345,11 @@
             }
         },
         dragend: function(event) {
-            if(!this.dragNode.data) return;
+            if(!this.dragNode.node) return;
             var grid = this.grid;
-            this.dragNode.data.id = this.dragNode.id;
+            this.dragNode.node.id = this.dragNode.id;
             // 替换占位符
-            view.update(grid, grid.elements[this.dragNode.data.id], this.dragNode.data);
+            view.update(grid, grid.elements[this.dragNode.node.id], this.dragNode.node);
             // 清理临时样式(结束拖拽)
             this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_ANIMATE;
             // 清理临时变量
@@ -358,7 +357,7 @@
             this.isDrag = false;
             this.isResize = false;
             this.dragNode.id = undefined;
-            this.dragNode.data = null;
+            this.dragNode.node = null;
             // 清理临时坐标
             this.prevX = undefined;
             this.prevY = undefined;
@@ -369,12 +368,8 @@
             delete grid.elements[PLACEHOLDER];
             // 重新计算容器高度
             var opt = grid.opt,
-                data = grid.data,
-                maxRowAndCol = grid.getMaxRowAndCol(opt, data);
-            view.setContainerProperty(opt.container, 
-                    maxRowAndCol.col * opt.cellW, 
-                    maxRowAndCol.row * opt.cellH,
-                    opt.draggable, opt.resizable);
+                maxRowAndCol = grid.getMaxRowAndCol(opt, grid.data);
+            view.setContainerWH(opt.container, maxRowAndCol.col * opt.cellW, maxRowAndCol.row * opt.cellH);
         }
     };
 
@@ -406,11 +401,23 @@
             }
             return arr;
         },
-        setContainerProperty: function(container, width, height, draggable, resizable) {
+        setContainerAttr: function(container, opt, draggable, resizable) {
             if (container) {
-                container.setAttribute('data-fg-draggable', draggable);
-                container.setAttribute('data-fg-resizable', resizable);
-                container.style.cssText += ";width:"+width+'px;'+'height:'+height+'px;';
+                if (typeof draggable !== 'undefined') {
+                    opt.draggable = !!draggable;
+                    opt.container.setAttribute(GRID_CONTAINER_DRAGGABLE, opt.draggable);
+                }
+                if (typeof resizable !== 'undefined') {
+                    opt.resizable = !!resizable;
+                    opt.container.setAttribute(GRID_CONTAINER_RESIZABLE, opt.resizable);
+                }
+            }
+        },
+        setContainerWH: function(container, width, height) {
+            if (container) {
+                var width = width !== undefined ? 'width:'+width+'px;' : 'width:auto;';
+                var height = height !== undefined ? 'height:'+height+'px;' : 'height:auto;';
+                container.style.cssText += ';' + width + height + ';';
             }
         },
         searchUp: function(node, type) {
@@ -571,16 +578,16 @@
                     opt = this.opt,
                     area = this.area, 
                     data = this.data,
-                    elements = this.elements;
-                this.maxRowAndCol = this.getMaxRowAndCol(opt, data);
+                    elements = this.elements,
+                    maxRowAndCol = this.getMaxRowAndCol(opt, data);
+                // 设置网格容器
+                view.setContainerAttr(opt.container, opt, opt.draggable, opt.draggable);
+                view.setContainerWH(opt.container, maxRowAndCol.col * opt.cellW, maxRowAndCol.row * opt.cellH);
+                // 重绘
                 this.sortData(data)
-                    .buildArea(area, this.maxRowAndCol.row, this.maxRowAndCol.col)
+                    .buildArea(area, maxRowAndCol.row, maxRowAndCol.col)
                     .putData(area, data)
                     .layout(area, data);
-                view.setContainerProperty(opt.container, 
-                    this.maxRowAndCol.col * opt.cellW, 
-                    this.maxRowAndCol.row * opt.cellH,
-                    opt.draggable, opt.resizable);
                 view.render(data, elements, opt.container, this);
                 asyncFun(function(){
                     self.opt.onLoad && self.opt.onLoad();
@@ -589,7 +596,11 @@
             return this;
         },
         resize: function(containerW, containerH) {
-
+            var opt = this.opt,
+                container = opt.container;
+            view.setContainerWH(opt.container);
+            this.computeCellScale(opt);
+            this.load();
         },
         // 计算最小网格宽高
         computeCellScale: function(opt) {
@@ -748,29 +759,13 @@
             }
         },
         setDraggable : function(draggable) {
-            if (typeof draggable !== 'undefined') {
-                var opt = this.opt,
-                    data = this.data,
-                    maxRowAndCol = this.getMaxRowAndCol(opt, data);
-                opt.draggable = !!draggable;
-                view.setContainerProperty(opt.container, 
-                    maxRowAndCol.col * opt.cellW, 
-                    maxRowAndCol.row * opt.cellH,
-                    opt.draggable, opt.resizable);
-            }
+            var opt = this.opt;
+            view.setContainerAttr(opt.container, opt, draggable, undefined);
             return this;
         },
         setResizable: function(resizable) {
-            if (typeof resizable !== 'undefined') {
-                var opt = this.opt,
-                    data = this.data,
-                    maxRowAndCol = this.getMaxRowAndCol(opt, data);
-                opt.resizable = !!resizable;
-                view.setContainerProperty(opt.container, 
-                    maxRowAndCol.col * opt.cellW, 
-                    maxRowAndCol.row * opt.cellH,
-                    opt.draggable, opt.resizable);
-            }
+            var opt = this.opt;
+            view.setContainerAttr(opt.container, opt, undefined, resizable);
             return this;
         },
         // 检测脏数据
