@@ -166,7 +166,7 @@
             this.isbind = false;
         },
         mousedown: function(event) {
-            var node = view.searchUp(event.target, GRID_ITEM)
+            var node = this.node = view.searchUp(event.target, GRID_ITEM)
             if (node) {
                 dragdrop.dragstart(event, node);
                 var isResize = dragdrop.isResize;
@@ -202,10 +202,13 @@
             }
         },
         click: function(event) {
-            var x = Math.abs(event.pageX - this.pageX);
-            var y = Math.abs(event.pageY - this.pageY);
-            if (x >= this.distance || y >= this.distance) {
-                event.stopPropagation();
+            if (this.node) {
+                var x = Math.abs(event.pageX - this.pageX);
+                var y = Math.abs(event.pageY - this.pageY);
+                if (x >= this.distance || y >= this.distance) {
+                    event.stopPropagation();
+                }
+                this.node = null;
             }
         }
     };
@@ -267,7 +270,6 @@
             var dx = self.currentX - self.prevX;
             var dy = self.currentY - self.prevY;
             // 触发机制 (优化, 减少触发次数)
-            // console.log('dx='+dx+',dy='+dy);
             if ( (-2 < dx && dx < 2) && (-2 < dy && dy < 2) ) return;
             // 当前坐标变成上一次的坐标
             self.prevX = self.currentX;
@@ -303,29 +305,43 @@
             }
         },
         resize: function(event, opt, dx, dy, translateX, translateY, grid) {
-            var eleW = this.dragElement.clientWidth + dx,
-                eleH = this.dragElement.clientHeight + dy,
-                nodeW = Math.ceil(eleW / opt.cellW_Int),
-                nodeH = Math.ceil(eleH / opt.cellH_Int);
-            // 计算最小尺寸, 判断是缩小还是放大
-            if (dx < 0 || dy < 0) {
-                var minW = opt.cellW_Int * this.dragNode.data.minW - opt.padding.left - opt.padding.right,
-                    minH = opt.cellH_Int * this.dragNode.data.minH - opt.padding.top - opt.padding.bottom;
-                eleW < minW && (eleW = minW*0.9);
-                eleH < minH && (eleH = minH*0.9); 
+            var ele = this.dragElement,
+                node = this.dragNode.data,
+                container = opt.container,
+                containerX = container.offsetLeft,
+                containerY = container.offsetTop,
+                containerW = container.clientWidth,
+                maxW = containerW,
+                minW = node.minW * opt.cellW_Int - opt.padding.left - opt.padding.right,
+                minH = node.minH * opt.cellH_Int - opt.padding.top - opt.padding.bottom,
+                eventW = event.pageX - containerX - translateX,
+                eventH = event.pageY - containerY - translateY;
+
+            var eleW = eventW, 
+                eleH = eventH;
+            // 判断最小宽
+            if (eventW < minW) {
+                eleW = minW * 0.9;
             }
-            // 判断最大宽度
-            var maxW = opt.container.clientWidth;
-            translateX + eleW > maxW && (eleW = maxW - translateX);
+            // 判断最小高
+            if (eventH < minH) {
+                eleH = minH * 0.9;
+            }
+            // 判断最大宽
+            if ( eventW + translateX > maxW) {
+                eleW = maxW - translateX
+            }
             // 设置宽高
-            this.dragElement.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
+            ele.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
-            if (this.dragNode.data.w !== nodeW || this.dragNode.data.h !== nodeH) {
-                grid.clearNodeInArea(grid.area, this.dragNode.data);
-                this.dragNode.data.w = nodeW;
-                this.dragNode.data.h = nodeH;
-                grid.checkIndexIsOutOf(grid.area, this.dragNode.data, this.isResize);
-                grid.overlap(grid.data, this.dragNode.data, dx, dy, this.isResize);
+            var nodeW = Math.ceil(eleW / opt.cellW_Int),
+                nodeH = Math.ceil(eleH / opt.cellH_Int);
+            if (node.w !== nodeW || node.h !== nodeH) {
+                grid.clearNodeInArea(grid.area, node);
+                node.w = nodeW;
+                node.h = nodeH;
+                grid.checkIndexIsOutOf(grid.area, node, this.isResize);
+                grid.overlap(grid.data, node, dx, dy, this.isResize);
                 grid.load();
             }
         },
@@ -571,6 +587,9 @@
                 });
             }
             return this;
+        },
+        resize: function(containerW, containerH) {
+
         },
         // 计算最小网格宽高
         computeCellScale: function(opt) {
