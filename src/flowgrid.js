@@ -154,17 +154,17 @@
         },
         // 绑定监听
         bindEvent: function () {
-            document.addEventListener('mousedown', this.mousedown, true);
-            document.addEventListener('mousemove', this.mousemove, true);
-            document.addEventListener('mouseup', this.mouseup, true);
+            document.addEventListener('mousedown', this.mousedown, false);
+            document.addEventListener('mousemove', this.mousemove, false);
+            document.addEventListener('mouseup', this.mouseup, false);
             document.addEventListener('click', this.click, true);
             this.isbind = true;
         },
         // 移除监听
         unbindEvent: function () {
-            document.removeEventListener('mousedown', this.mousedown, true);
-            document.removeEventListener('mousemove', this.mousemove, true);
-            document.removeEventListener('mouseup', this.mouseup, true);
+            document.removeEventListener('mousedown', this.mousedown, false);
+            document.removeEventListener('mousemove', this.mousemove, false);
+            document.removeEventListener('mouseup', this.mouseup, false);
             document.removeEventListener('click', this.click, true);
             this.isbind = false;
         },
