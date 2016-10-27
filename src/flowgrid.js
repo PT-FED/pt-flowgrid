@@ -6,7 +6,7 @@
  * 描述: 可拖拽流式布局
  * 原则和思路:  不依赖任何框架和类库, 通过指定classname进行配置, 实现view层的拖拽, 只和css打交道.
  * 兼容性: ie11+
- * 支持: requirejs和commonjs和seajs, 
+ * 支持: requirejs和commonjs和seajs,
  */
 ;(function (parent, fun) {
     if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
@@ -41,7 +41,8 @@
         PLACEHOLDER = 'placeholder';                       // 占位符
 
     // 默认设置
-    var f = function(){};
+    var f = function () {
+    };
     var setting = {
         row: 7,                                            // 网格布局的默认行,默认7行
         col: 12,                                           // 网格布局的默认列,默认12列
@@ -56,7 +57,7 @@
             top: 5,
             left: 5,
             right: 5,
-            bottom: 5   
+            bottom: 5
         },
         cellScale: {                                       // 单元格的宽高比例, 默认16:9
             w: 16,
@@ -68,19 +69,19 @@
             w: 2,
             h: 2
         },
-        onDragStart:f,                                     // 回调函数, 开始拖拽
-        onDragEnd:f,                                       // 回调函数, 结束拖拽
-        onResizeStart:f,                                   // 回调函数, 开始缩放
-        onResizeEnd:f,                                     // 回调函数, 结束拖拽
-        onAddNode:f,                                       // 回调函数, 添加节点
-        onDeleteNode:f,                                    // 回调函数, 删除节点
-        onLoad:f                                           // 回调函数, 重新加载
+        onDragStart: f,                                     // 回调函数, 开始拖拽
+        onDragEnd: f,                                       // 回调函数, 结束拖拽
+        onResizeStart: f,                                   // 回调函数, 开始缩放
+        onResizeEnd: f,                                     // 回调函数, 结束拖拽
+        onAddNode: f,                                       // 回调函数, 添加节点
+        onDeleteNode: f,                                    // 回调函数, 删除节点
+        onLoad: f                                           // 回调函数, 重新加载
     };
 
     // 网格对象的缓存对象
     var cache = {
         count: 0,
-        getGrid: function(node) {
+        getGrid: function (node) {
             var container = view.searchUp(node, GRID_CONTAINER);
             return cache[container.getAttribute(GRID_CONTAINER_INDEX)]
         }
@@ -102,7 +103,7 @@
 
     // 空对象
     function isEmptyObject(obj) {
-        for(var i in obj) {
+        for (var i in obj) {
             return false;
         }
         return true;
@@ -111,8 +112,8 @@
     // 节流函数
     function throttle(now) {
         var time = new Date().getTime();
-        throttle = function(now) {
-            if ( now - time > THROTTLE_TIME ) {
+        throttle = function (now) {
+            if (now - time > THROTTLE_TIME) {
                 time = now;
                 return true;
             }
@@ -123,7 +124,7 @@
 
     // 异步执行回调
     function asyncFun(ck) {
-        setTimeout(function() {
+        setTimeout(function () {
             ck && typeof ck === 'function' && ck();
         }, 0);
     }
@@ -144,7 +145,7 @@
 
     // 事件处理对象
     var handleEvent = {
-        init: function(isbind, body) {
+        init: function (isbind, body) {
             if (this.isbind) return;
             this.isbind = isbind;
             this.body = body;
@@ -152,22 +153,22 @@
             this.bindEvent();
         },
         // 绑定监听
-        bindEvent: function() {
-            document.addEventListener('mousedown', this.mousedown , true);
+        bindEvent: function () {
+            document.addEventListener('mousedown', this.mousedown, true);
             document.addEventListener('mousemove', this.mousemove, true);
             document.addEventListener('mouseup', this.mouseup, true);
             document.addEventListener('click', this.click, true);
             this.isbind = true;
         },
         // 移除监听
-        unbindEvent: function() {
+        unbindEvent: function () {
             document.removeEventListener('mousedown', this.mousedown, true);
             document.removeEventListener('mousemove', this.mousemove, true);
             document.removeEventListener('mouseup', this.mouseup, true);
             document.removeEventListener('click', this.click, true);
             this.isbind = false;
         },
-        mousedown: function(event) {
+        mousedown: function (event) {
             var node = this.node = view.searchUp(event.target, GRID_ITEM)
             if (node) {
                 dragdrop.dragstart(event, node);
@@ -177,9 +178,9 @@
                 this.pageX = event.pageX;
                 this.pageY = event.pageY;
                 if (grid.opt.draggable) {
-                    asyncFun(function() {
-                        isResize ? grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode) 
-                        : grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);    
+                    asyncFun(function () {
+                        isResize ? grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode)
+                            : grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);
                     })
                 }
             }
@@ -196,14 +197,14 @@
                 var isResize = dragdrop.isResize;
                 var grid = dragdrop.grid;
                 var node = grid.clone(dragdrop.dragNode);
-                asyncFun(function() {
-                    isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, node) 
+                asyncFun(function () {
+                    isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, node)
                         : grid.opt.onDragEnd(event, dragdrop.dragElement, node);
                 });
                 dragdrop.dragend(event);
             }
         },
-        click: function(event) {
+        click: function (event) {
             if (this.node) {
                 var x = Math.abs(event.pageX - this.pageX);
                 var y = Math.abs(event.pageY - this.pageY);
@@ -224,7 +225,7 @@
             node: null,             // 占位符节点的关联数据
         },
         dragElement: null,          // 拖拽的dom节点
-        dragstart: function(event, node) {
+        dragstart: function (event, node) {
             var className = event.target.className;
             // 取得网格对象
             var grid = this.grid = cache.getGrid(node);
@@ -232,7 +233,7 @@
             if (!grid.opt.draggable) return;
             // 判断是否拖拽
             if (typeof className === 'string') {
-                var classes =  className.split(" ");
+                var classes = className.split(" ");
                 if (classes.indexOf(GRID_ITEM_DRAG) === -1) {
                     // 判断是否放大缩小
                     if (classes.indexOf(GRID_ITEM_ZOOM) !== -1) {
@@ -257,9 +258,9 @@
                 grid.opt.container.appendChild(element);
             }
         },
-        drag: function(event) {
+        drag: function (event) {
             var self = this;
-            if(!self.dragNode.node) return;
+            if (!self.dragNode.node) return;
             var grid = self.grid,
                 opt = grid.opt;
             // 计算坐标
@@ -272,15 +273,15 @@
             var dx = self.currentX - self.prevX;
             var dy = self.currentY - self.prevY;
             // 触发机制 (优化, 减少触发次数)
-            if ( (-2 < dx && dx < 2) && (-2 < dy && dy < 2) ) return;
+            if ((-2 < dx && dx < 2) && (-2 < dy && dy < 2)) return;
             // 当前坐标变成上一次的坐标
             self.prevX = self.currentX;
             self.prevY = self.currentY;
             // 相对父元素的偏移坐标x,y
             var translate = this.dragElement.style.transform,
                 value = translate.replace(/translate.*\(/ig, '').replace(/\).*$/ig, '').replace(/px/ig, '').split(','),
-                translateX = value[0]*1,
-                translateY = value[1]*1;
+                translateX = value[0] * 1,
+                translateY = value[1] * 1;
             // 判断是不是放大缩小
             if (this.isResize) {
                 this.resize(event, opt, dx, dy, translateX, translateY, grid);
@@ -288,7 +289,7 @@
                 this.changeLocation(event, opt, dx, dy, translateX, translateY, grid);
             }
         },
-        changeLocation: function(event, opt, dx, dy, translateX, translateY, grid) {
+        changeLocation: function (event, opt, dx, dy, translateX, translateY, grid) {
             var node = this.dragNode.node,
                 cellW_Int = opt.cellW_Int,
                 cellH_Int = opt.cellH_Int;
@@ -307,7 +308,7 @@
                 grid.load();
             }
         },
-        resize: function(event, opt, dx, dy, translateX, translateY, grid) {
+        resize: function (event, opt, dx, dy, translateX, translateY, grid) {
             var ele = this.dragElement,
                 node = this.dragNode.node,
                 container = opt.container,
@@ -319,7 +320,7 @@
                 minH = node.minH * opt.cellH_Int - opt.padding.top - opt.padding.bottom,
                 eventW = event.pageX - containerX - translateX,
                 eventH = event.pageY - containerY - translateY;
-            var eleW = eventW, 
+            var eleW = eventW,
                 eleH = eventH;
             // 判断最小宽
             if (eventW < minW)
@@ -328,7 +329,7 @@
             if (eventH < minH)
                 eleH = minH * 0.9;
             // 判断最大宽
-            if ( eventW + translateX > maxW)
+            if (eventW + translateX > maxW)
                 eleW = maxW - translateX
             // 设置宽高
             ele.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
@@ -344,8 +345,8 @@
                 grid.load();
             }
         },
-        dragend: function(event) {
-            if(!this.dragNode.node) return;
+        dragend: function (event) {
+            if (!this.dragNode.node) return;
             var grid = this.grid;
             this.dragNode.node.id = this.dragNode.id;
             // 替换占位符
@@ -383,12 +384,12 @@
                 ele = elements[i];
                 if (ele.className.split(" ").indexOf(GRID_ITEM) !== -1) {
                     arr[i] = {
-                        x: ele.getAttribute('data-fg-x')*1,
-                        y: ele.getAttribute('data-fg-y')*1,
-                        w: ele.getAttribute('data-fg-w')*1,
-                        h: ele.getAttribute('data-fg-h')*1,
-                        minW: ele.getAttribute('data-fg-min-w')*1,
-                        minH: ele.getAttribute('data-fg-min-h')*1
+                        x: ele.getAttribute('data-fg-x') * 1,
+                        y: ele.getAttribute('data-fg-y') * 1,
+                        w: ele.getAttribute('data-fg-w') * 1,
+                        h: ele.getAttribute('data-fg-h') * 1,
+                        minW: ele.getAttribute('data-fg-min-w') * 1,
+                        minH: ele.getAttribute('data-fg-min-h') * 1
                     };
                     var id = ele.getAttribute('data-fg-id');
                     if (id) {
@@ -401,7 +402,7 @@
             }
             return arr;
         },
-        setContainerAttr: function(container, opt, draggable, resizable) {
+        setContainerAttr: function (container, opt, draggable, resizable) {
             if (container) {
                 if (typeof draggable !== 'undefined') {
                     opt.draggable = !!draggable;
@@ -413,14 +414,14 @@
                 }
             }
         },
-        setContainerWH: function(container, width, height) {
+        setContainerWH: function (container, width, height) {
             if (container) {
-                var width = width !== undefined ? 'width:'+width+'px;' : 'width:auto;';
-                var height = height !== undefined ? 'height:'+height+'px;' : 'height:auto;';
+                var width = width !== undefined ? 'width:' + width + 'px;' : 'width:auto;';
+                var height = height !== undefined ? 'height:' + height + 'px;' : 'height:auto;';
                 container.style.cssText += ';' + width + height + ';';
             }
         },
-        searchUp: function(node, type) {
+        searchUp: function (node, type) {
             if (node === handleEvent.body || node === document) return undefined;   // 向上递归到body就停
             var arr = typeof node.className === 'string' && node.className.split(' ');
             if (arr) {
@@ -428,11 +429,11 @@
                     if (arr[i] === type) {
                         return node;
                     }
-                }    
+                }
             }
             return this.searchUp(node.parentNode, type);
         },
-        create: function(grid, node, className) {
+        create: function (grid, node, className) {
             var item = document.createElement("div"),
                 zoom = document.createElement("div"),
                 content = document.createElement("div");
@@ -440,26 +441,26 @@
             if (grid.opt.isDragBar) {
                 var drag = document.createElement("div");
                 drag.className = GRID_ITEM_DRAG;
-                drag.innerHTML = '<svg class="'+GRID_ITEM_DRAG_SVG+'" viewBox="0 0 200 200"'
-                     + 'version="1.1" xmlns="http://www.w3.org/2000/svg" '
-                     + 'xmlns:xlink="http://www.w3.org/1999/xlink">'
-                     + '<g class="transform-group">'
-                     + '<g transform="scale(0.1953125, 0.1953125)">'
-                     + '<path d="M 839.457 330.079 c 36.379 0 181.921 145.538 181.921 181.926 '
-                     + 'c 0 36.379 -145.543 181.916 -181.921 181.916 '
-                     + 'c -36.382 0 -36.382 -36.388 -36.382 -36.388 '
-                     + 'v -291.07 c 0 0 0 -36.384 36.382 -36.384 '
-                     + 'v 0 Z M 803.058 475.617 v 72.766 l -254.687 -0.001 '
-                     + 'v 254.692 h -72.766 v -254.691 h -254.683 '
-                     + 'v -72.766 h 254.682 v -254.693 h 72.766 v 254.692 '
-                     + 'l 254.688 0.001 Z M 693.921 184.546 c 0 36.377 -36.388 36.377 -36.388 36.377 '
-                     + 'h -291.07 c 0 0 -36.383 0 -36.383 -36.377 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
-                     + 'c 36.375 0 181.915 145.539 181.915 181.926 v 0 Z M 657.531 803.075 '
-                     + 'c 0 0 36.388 0 36.388 36.382 c 0 36.388 -145.538 181.921 -181.916 181.921 '
-                     + 'c -36.387 0 -181.926 -145.532 -181.926 -181.921 c 0 -36.382 36.383 -36.382 36.383 -36.382 '
-                     + 'h 291.07 Z M 220.924 548.383 v 109.149 c 0 0 0 36.388 -36.377 36.388 '
-                     + 'c -36.387 0 -181.926 -145.538 -181.926 -181.916 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
-                     + 'c 36.377 0 36.377 36.383 36.377 36.383 v 181.92 Z M 220.924 548.383 Z"></path></g></g></svg>';
+                drag.innerHTML = '<svg class="' + GRID_ITEM_DRAG_SVG + '" viewBox="0 0 200 200"'
+                    + 'version="1.1" xmlns="http://www.w3.org/2000/svg" '
+                    + 'xmlns:xlink="http://www.w3.org/1999/xlink">'
+                    + '<g class="transform-group">'
+                    + '<g transform="scale(0.1953125, 0.1953125)">'
+                    + '<path d="M 839.457 330.079 c 36.379 0 181.921 145.538 181.921 181.926 '
+                    + 'c 0 36.379 -145.543 181.916 -181.921 181.916 '
+                    + 'c -36.382 0 -36.382 -36.388 -36.382 -36.388 '
+                    + 'v -291.07 c 0 0 0 -36.384 36.382 -36.384 '
+                    + 'v 0 Z M 803.058 475.617 v 72.766 l -254.687 -0.001 '
+                    + 'v 254.692 h -72.766 v -254.691 h -254.683 '
+                    + 'v -72.766 h 254.682 v -254.693 h 72.766 v 254.692 '
+                    + 'l 254.688 0.001 Z M 693.921 184.546 c 0 36.377 -36.388 36.377 -36.388 36.377 '
+                    + 'h -291.07 c 0 0 -36.383 0 -36.383 -36.377 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
+                    + 'c 36.375 0 181.915 145.539 181.915 181.926 v 0 Z M 657.531 803.075 '
+                    + 'c 0 0 36.388 0 36.388 36.382 c 0 36.388 -145.538 181.921 -181.916 181.921 '
+                    + 'c -36.387 0 -181.926 -145.532 -181.926 -181.921 c 0 -36.382 36.383 -36.382 36.383 -36.382 '
+                    + 'h 291.07 Z M 220.924 548.383 v 109.149 c 0 0 0 36.388 -36.377 36.388 '
+                    + 'c -36.387 0 -181.926 -145.538 -181.926 -181.916 c 0 -36.387 145.538 -181.926 181.926 -181.926 '
+                    + 'c 36.377 0 36.377 36.383 36.377 36.383 v 181.92 Z M 220.924 548.383 Z"></path></g></g></svg>';
                 item.appendChild(drag);
             }
             item.className = className ? className : (GRID_ITEM + ' ' + GRID_ITEM_ANIMATE);
@@ -470,7 +471,7 @@
             this.update(grid, item, node, className);
             return item;
         },
-        update: function(grid, element, node, className) {
+        update: function (grid, element, node, className) {
             var opt = grid.opt;
             if (element) {
                 element.className = className ? className : (GRID_ITEM + ' ' + GRID_ITEM_ANIMATE);
@@ -480,25 +481,25 @@
                 element.setAttribute('data-fg-w', node.w);
                 element.setAttribute('data-fg-h', node.h);
                 element.style.cssText += (';transform: translate(' + (node.x * opt.cellW_Int) + 'px,'
-                    + (node.y * opt.cellH_Int) + 'px);'
-                    + 'width: ' + (node.w * opt.cellW_Int - opt.padding.left - opt.padding.right)  + 'px;'
-                    + 'height: ' + (node.h * opt.cellH_Int - opt.padding.top - opt.padding.bottom) + 'px;');    
+                + (node.y * opt.cellH_Int) + 'px);'
+                + 'width: ' + (node.w * opt.cellW_Int - opt.padding.left - opt.padding.right) + 'px;'
+                + 'height: ' + (node.h * opt.cellH_Int - opt.padding.top - opt.padding.bottom) + 'px;');
             }
         },
-        clear: function(container) {
+        clear: function (container) {
             container.innerHTML = '';
         },
-        remove: function(id) {
-            var delElement = document.querySelector('div.'+GRID_ITEM+'['+GRID_ITEM_DATA_ID+'="'+id+'"]');
+        remove: function (id) {
+            var delElement = document.querySelector('div.' + GRID_ITEM + '[' + GRID_ITEM_DATA_ID + '="' + id + '"]');
             delElement && delElement.parentNode.removeChild(delElement);
         },
-        render: function(data, elements, container, grid) {
+        render: function (data, elements, container, grid) {
             var i, len, node, element;
             if (isEmptyObject(elements)) {
                 var fragment = document.createDocumentFragment();
                 for (i = 0, len = data.length; i < len; i++) {
                     node = data[i];
-                    if (node) { 
+                    if (node) {
                         element = elements[node.id] = this.create(grid, node)
                         fragment.appendChild(element);
                     }
@@ -533,7 +534,7 @@
     // 网格对象原型
     Grid.prototype = {
         constructor: Grid,
-        init: function(opt, container, originalData) {
+        init: function (opt, container, originalData) {
             this.originalData = [];
             this.area = [];
             this.data = [];
@@ -551,7 +552,7 @@
             }
             return this;
         },
-        destroy: function() {
+        destroy: function () {
             this.originalData = null;
             this.opt = null;
             this.area = null;
@@ -559,7 +560,7 @@
             this.elements = null;
             return this;
         },
-        loadDom: function(isload) {
+        loadDom: function (isload) {
             if (isload === undefined || isload === true) {
                 this.originalData = [];
                 this.area = [];
@@ -572,11 +573,11 @@
             }
             return this;
         },
-        load: function(isload) {
+        load: function (isload) {
             if (isload === undefined || isload === true) {
                 var self = this,
                     opt = this.opt,
-                    area = this.area, 
+                    area = this.area,
                     data = this.data,
                     elements = this.elements,
                     maxRowAndCol = this.getMaxRowAndCol(opt, data);
@@ -589,13 +590,13 @@
                     .putData(area, data)
                     .layout(area, data);
                 view.render(data, elements, opt.container, this);
-                asyncFun(function(){
+                asyncFun(function () {
                     self.opt.onLoad && self.opt.onLoad();
                 });
             }
             return this;
         },
-        resize: function(containerW, containerH) {
+        resize: function (containerW, containerH) {
             var opt = this.opt,
                 container = opt.container;
             view.setContainerWH(opt.container);
@@ -603,24 +604,24 @@
             this.load();
         },
         // 计算最小网格宽高
-        computeCellScale: function(opt) {
+        computeCellScale: function (opt) {
             opt.containerW = opt.container.clientWidth;
             opt.containerH = opt.container.clientHeight;
             opt.cellW = opt.containerW / opt.col;
-            opt.cellH = opt.cellW / opt.cellScale.w * opt.cellScale.h; 
+            opt.cellH = opt.cellW / opt.cellScale.w * opt.cellScale.h;
             opt.cellW_Int = Math.floor(opt.cellW);
             opt.cellH_Int = Math.floor(opt.cellH);
             return this;
         },
         // 设置数据
-        setData: function(originalData, isload) {
+        setData: function (originalData, isload) {
             // 遍历原始数据
             if (originalData && Array.isArray(originalData)) {
                 this.originalData = originalData;
                 var opt = this.opt,
                     data = this.data = [];
                 // 制作渲染数据
-                originalData.forEach(function(node, idx) {
+                originalData.forEach(function (node, idx) {
                     data[idx] = buildNode(node, idx, opt);
                 });
                 // 再刷新
@@ -628,16 +629,16 @@
             }
             return this;
         },
-        sortData: function(data) {
-            data.sort(function(a, b) {
+        sortData: function (data) {
+            data.sort(function (a, b) {
                 var y = a.y - b.y
                 return y === 0 ? a.x - b.x : y;
             });
-            return this;  
+            return this;
         },
         // 构建网格区域
-        buildArea: function(area, row, col) {
-            if (area && Array.isArray(area) ) {
+        buildArea: function (area, row, col) {
+            if (area && Array.isArray(area)) {
                 for (var r = 0; r < row; r++) {
                     area[r] = new Array(col);
                 }
@@ -645,7 +646,7 @@
             return this;
         },
         // 将数据铺进网格布局
-        putData: function(area, data) {
+        putData: function (area, data) {
             var i, r, c, len, rlen, clen, node;
             for (i = 0, len = data.length; i < len; i++) {
                 node = data[i];
@@ -658,7 +659,7 @@
             return this;
         },
         // 取得区域中的最大行和列
-        getMaxRowAndCol: function(opt, data) {
+        getMaxRowAndCol: function (opt, data) {
             var i, n, len, max = {row: opt.row, col: opt.col};
             if (data && data.length > 0) {
                 for (i = 0, len = data.length; i < len; i++) {
@@ -673,7 +674,7 @@
             }
             return max;
         },
-        add: function(n, isload) {
+        add: function (n, isload) {
             var node,
                 self = this,
                 opt = this.opt,
@@ -689,21 +690,21 @@
             }
             data[data.length] = node;
             this.load(isload);
-            asyncFun(function(){
-                self.opt.onAddNode && self.opt.onAddNode(self.elements[node.id], node);    
+            asyncFun(function () {
+                self.opt.onAddNode && self.opt.onAddNode(self.elements[node.id], node);
             })
             return node;
         },
         // 取得节点空位
-        getVacant: function(w, h) {
+        getVacant: function (w, h) {
             return this.addAutoNode(this.area, {x: 0, y: 0, w: w, h: h});
         },
         // 自动扫描空位添加节点
-        addAutoNode: function(area, node) {
+        addAutoNode: function (area, node) {
             var r, c;
-            for (r = 0; r < area.length; r = r + node.h ) {
+            for (r = 0; r < area.length; r = r + node.h) {
                 node.y = r;
-                for (c = 0; c < area[0].length; c = c + node.w ) {
+                for (c = 0; c < area[0].length; c = c + node.w) {
                     node.x = c;
                     if (!this.collision(area, node))
                         return node;
@@ -714,7 +715,7 @@
             return node;
         },
         // 碰撞检测
-        collision: function(area, node) {
+        collision: function (area, node) {
             var r, c, rlen, clen;
             // 从左到右, 从上到下
             for (r = node.y, rlen = node.y + node.h; r < rlen; r++) {
@@ -726,7 +727,7 @@
             }
             return false;
         },
-        delete: function(id, isload) {
+        delete: function (id, isload) {
             var self = this,
                 data = this.data,
                 index = this.query(id).index,
@@ -734,20 +735,20 @@
             view.remove(id);
             delete this.elements[id];
             this.load(isload);
-            asyncFun(function(){
+            asyncFun(function () {
                 self.opt.onDeleteNode && self.opt.onDeleteNode(self.elements[id], arr[0]);
             });
             return arr[0];
         },
-        edit: function(n, isload) {
+        edit: function (n, isload) {
             var node = this.query(n.id).node;
-            for(var k in n) {
+            for (var k in n) {
                 node[k] = n[k];
             }
             this.load(isload);
             return node;
         },
-        query: function(id) {
+        query: function (id) {
             var data = this.data;
             for (var i = 0, len = data.length; i < len; i++) {
                 if (data[i].id == id) {
@@ -758,18 +759,18 @@
                 }
             }
         },
-        setDraggable : function(draggable) {
+        setDraggable: function (draggable) {
             var opt = this.opt;
             view.setContainerAttr(opt.container, opt, draggable, undefined);
             return this;
         },
-        setResizable: function(resizable) {
+        setResizable: function (resizable) {
             var opt = this.opt;
             view.setContainerAttr(opt.container, opt, undefined, resizable);
             return this;
         },
         // 检测脏数据
-        checkIndexIsOutOf: function(area, node, isResize) {
+        checkIndexIsOutOf: function (area, node, isResize) {
             var row = area.length,
                 col = (area[0] && area[0].length) || this.opt.col;
             // 数组下标越界检查
@@ -778,22 +779,22 @@
             if (isResize) {
                 node.x + node.w > col && (node.w = col - node.x);
             } else {
-                node.x + node.w > col && (node.x = col - node.w);    
+                node.x + node.w > col && (node.x = col - node.w);
             }
             return this;
         },
         // 检测矩形碰撞
-        checkHit: function(n, node) {
+        checkHit: function (n, node) {
             var result = false;
-            if ( (n.x + n.w > node.x) && (n.x < node.x + node.w) ) {
-                if ( (n.y + n.h > node.y) && (n.y < node.y + node.h) ) {
+            if ((n.x + n.w > node.x) && (n.x < node.x + node.w)) {
+                if ((n.y + n.h > node.y) && (n.y < node.y + node.h)) {
                     result = true;
                 }
             }
             return result;
         },
         // 节点重叠
-        overlap: function(data, node, dx, dy, isResize) {
+        overlap: function (data, node, dx, dy, isResize) {
             var i, n, len,
                 dx = dx || 0,
                 dy = dy || 0,
@@ -806,9 +807,9 @@
             if (!isResize) {
                 for (i = 0, len = data.length; i < len; i++) {
                     n = data[i];
-                    if (n !== node && checkHit(n, node) ) {
+                    if (n !== node && checkHit(n, node)) {
                         var val = n.y + n.h - node.y;
-                        if ( val > offsetUnderY ) {
+                        if (val > offsetUnderY) {
                             offsetUnderY = val;
                             offsetNode = n;
                         }
@@ -820,7 +821,7 @@
                     // 计算差值, 与中间值比较, dy > 2 下移(2是优化, 防止平移上下震动), 拿y+h来和中间值比较
                     var difference = (dy >= 2 && dy >= dx) ? node.y + node.h - offsetNode.y : node.y - offsetNode.y;
                     // 大于中间值, 求出下面那部分截断的偏移量, 等于是怕上下顺序连续的块,会错过互换位置
-                    if ( difference >= median ) {
+                    if (difference >= median) {
                         node.y = node.y + offsetUnderY;
                     }
                 }
@@ -837,7 +838,7 @@
             for (i = 0, len = data.length; i < len; i++) {
                 n = data[i];
                 if (n !== node) {
-                    if ( (n.y < node.y && node.y < n.y + n.h) || node.y <= n.y ) {
+                    if ((n.y < node.y && node.y < n.y + n.h) || node.y <= n.y) {
                         n.y = n.y + node.h + offsetUpY;
                     }
                 }
@@ -845,7 +846,7 @@
             return this;
         },
         // 流布局
-        layout: function(area, data) {
+        layout: function (area, data) {
             var i, len, r, node;
             // 原理: 遍历数据集, 碰撞检测, 修改node.y, 进行上移.
             for (i = 0, len = data.length; i < len; i++) {
@@ -858,21 +859,21 @@
             return this;
         },
         // 寻找空行
-        findEmptyLine: function(area, node) {
+        findEmptyLine: function (area, node) {
             var r, c, len, cell;
             // 扫描, 找到最接近顶部的空行是第几行
             for (r = node.y - 1; r >= 0; r--) {
-                for (c = node.x, len = node.x + node.w; c < len; c++){
+                for (c = node.x, len = node.x + node.w; c < len; c++) {
                     cell = area[r][c];
                     if (cell || cell == 0) {
-                        return r+1;
+                        return r + 1;
                     }
                 }
             }
             return 0;
         },
         // 上移
-        moveUp: function(area, node, newRow) {
+        moveUp: function (area, node, newRow) {
             // 清除区域中的节点
             this.clearNodeInArea(area, node);
             // 在刷进去
@@ -883,16 +884,16 @@
                     area[r][c] = node.id;
         },
         // 清除区域中的节点
-        clearNodeInArea: function(area, node) {
+        clearNodeInArea: function (area, node) {
             var r, c, rlen, clen;
             for (r = node.y, rlen = node.y + node.h; r < rlen; r++)
                 for (c = node.x, clen = node.x + node.w; c < clen; c++)
                     area[r] && (area[r][c] = undefined);
         },
-        clone: function(node) {
+        clone: function (node) {
             var obj = {};
-            for(var attr in node)
-                if (node.hasOwnProperty(attr)) 
+            for (var attr in node)
+                if (node.hasOwnProperty(attr))
                     obj[attr] = node[attr];
             return obj;
         }
@@ -904,14 +905,15 @@
         handleEvent.init(true, document.body);
         // 判断容器
         if (!container)
-            container = document.querySelector('.'+GRID_CONTAINER);
+            container = document.querySelector('.' + GRID_CONTAINER);
         else if (typeof jQuery === "object" && container instanceof jQuery)
             container = container[0];
         // 设置编号
         var index = GRID_CONTAINER + cache.count++;
         if (!container.getAttribute(GRID_CONTAINER_INDEX))
             container.setAttribute(GRID_CONTAINER_INDEX, index);
-        cache[index] = new Grid(options, container, originalData);;
+        cache[index] = new Grid(options, container, originalData);
+        ;
         return cache[index];
     }
 
