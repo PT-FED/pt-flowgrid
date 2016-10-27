@@ -312,8 +312,9 @@
             var ele = this.dragElement,
                 node = this.dragNode.node,
                 container = opt.container,
-                containerX = container.offsetLeft,
-                containerY = container.offsetTop,
+                containerOffset = view.getContainerOffset(container, {top: 0, left: 0}),
+                containerX = containerOffset.left,
+                containerY = containerOffset.top,
                 containerW = container.clientWidth,
                 maxW = containerW,
                 minW = node.minW * opt.cellW_Int - opt.padding.left - opt.padding.right,
@@ -324,10 +325,10 @@
                 eleH = eventH;
             // 判断最小宽
             if (eventW < minW)
-                eleW = minW * 0.9;
+                eleW = minW * 0.95;
             // 判断最小高
             if (eventH < minH)
-                eleH = minH * 0.9;
+                eleH = minH * 0.95;
             // 判断最大宽
             if (eventW + translateX > maxW)
                 eleW = maxW - translateX
@@ -420,6 +421,12 @@
                 var height = height !== undefined ? 'height:' + height + 'px;' : 'height:auto;';
                 container.style.cssText += ';' + width + height + ';';
             }
+        },
+        getContainerOffset: function(node, offset) {
+            if (node === null || node === document) return offset;
+                offset.top += node.offsetTop;
+                offset.left += node.offsetLeft;
+            return this.getContainerOffset(node.offsetParent, offset);
         },
         searchUp: function (node, type) {
             if (node === handleEvent.body || node === document) return undefined;   // 向上递归到body就停
