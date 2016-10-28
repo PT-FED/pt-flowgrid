@@ -53,6 +53,7 @@
         isDragBar: false,                                  // 是否启用拖拽句柄, 默认不启明
         nodeMinW: 2,                                       // 节点块的最小宽度, 默认占2格
         nodeMinH: 2,                                       // 节点块的最小高度, 默认占2格
+        overflow: 5,                                       // 当拖拽或缩放超出网格容器的溢出像素
         padding: {                                         // 节点块之间的间距, 默认都为5px
             top: 5,
             left: 5,
@@ -291,13 +292,28 @@
         },
         changeLocation: function (event, opt, dx, dy, translateX, translateY, grid) {
             var node = this.dragNode.node,
-                cellW_Int = opt.cellW_Int,
-                cellH_Int = opt.cellH_Int;
+                nodeW = node.w * opt.cellW_Int - opt.padding.left - opt.padding.right,
+                container = opt.container,
+                containerOffset = view.getContainerOffset(container, {top: 0, left: 0}),
+                containerX = containerOffset.left,
+                containerY = containerOffset.top,
+                maxW = container.clientWidth;
+            var x = translateX + dx;
+            var y = translateY + dy;
+            // 判断最小宽
+            if (x < 0)
+                x = - opt.overflow;
+            // 判断最小高
+            if (y < 0)
+                y = - opt.overflow;
+            // 判断最大宽
+            if (x + nodeW > maxW)
+                x = maxW - nodeW + opt.overflow;
             // 计算坐标
-            this.dragElement.style.cssText += ';transform: translate(' + (translateX + dx) + 'px,' + (translateY + dy) + 'px);';
+            this.dragElement.style.cssText += ';transform: translate(' + x + 'px,' + y + 'px);';
             // 当前拖拽节点的坐标, 转换成对齐网格的坐标
-            var nodeX = Math.round(translateX / cellW_Int);
-            var nodeY = Math.round(translateY / cellH_Int);
+            var nodeX = Math.round(x / opt.cellW_Int);
+            var nodeY = Math.round(y / opt.cellH_Int);
             // 判断坐标是否变化
             if (node.x !== nodeX || node.y !== nodeY) {
                 grid.clearNodeInArea(grid.area, node);
@@ -325,13 +341,13 @@
                 eleH = eventH;
             // 判断最小宽
             if (eventW < minW)
-                eleW = minW * 0.95;
+                eleW = minW - opt.overflow;
             // 判断最小高
             if (eventH < minH)
-                eleH = minH * 0.95;
+                eleH = minH - opt.overflow;
             // 判断最大宽
             if (eventW + translateX > maxW)
-                eleW = maxW - translateX
+                eleW = maxW - translateX + opt.overflow;
             // 设置宽高
             ele.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
