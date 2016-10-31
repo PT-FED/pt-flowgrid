@@ -297,20 +297,9 @@
                 containerOffset = view.getContainerOffset(container, {top: 0, left: 0}),
                 containerX = containerOffset.left,
                 containerY = containerOffset.top,
-                eventX = event.pageX,
-                eventY = event.pageY,
-                maxW = container.clientWidth;
+                containerW = container.clientWidth;
             var x = translateX + dx;
             var y = translateY + dy;
-            // 判断最小宽
-            if (x < 0)
-                x = - opt.overflow;
-            // 判断最小高
-            if (y < 0)
-                y = - opt.overflow;
-            // 判断最大宽
-            if (x + nodeW > maxW)
-                x = maxW - nodeW + opt.overflow;
             // 计算坐标
             this.dragElement.style.cssText += ';transform: translate(' + x + 'px,' + y + 'px);';
             // 当前拖拽节点的坐标, 转换成对齐网格的坐标
@@ -334,7 +323,6 @@
                 containerX = containerOffset.left,
                 containerY = containerOffset.top,
                 containerW = container.clientWidth,
-                maxW = containerW,
                 minW = node.minW * opt.cellW_Int - opt.padding.left - opt.padding.right,
                 minH = node.minH * opt.cellH_Int - opt.padding.top - opt.padding.bottom,
                 eventW = event.pageX - containerX - translateX,
@@ -348,8 +336,8 @@
             if (eventH < minH)
                 eleH = minH - opt.overflow;
             // 判断最大宽
-            if (eventW + translateX > maxW)
-                eleW = maxW - translateX + opt.overflow;
+            if (eventW + translateX > containerW)
+                eleW = containerW - translateX + opt.overflow;
             // 设置宽高
             ele.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
             // 判断宽高是否变化
@@ -386,10 +374,6 @@
             // 移除临时dom(占位符)
             view.remove(PLACEHOLDER);
             delete grid.elements[PLACEHOLDER];
-            // 重新计算容器高度
-            var opt = grid.opt,
-                maxRowAndCol = grid.getMaxRowAndCol(opt, grid.data);
-            view.setContainerWH(opt.container, maxRowAndCol.col * opt.cellW, maxRowAndCol.row * opt.cellH);
         }
     };
 
@@ -431,13 +415,6 @@
                     opt.resizable = !!resizable;
                     opt.container.setAttribute(GRID_CONTAINER_RESIZABLE, opt.resizable);
                 }
-            }
-        },
-        setContainerWH: function (container, width, height) {
-            if (container) {
-                var width = width !== undefined ? 'width:' + width + 'px;' : 'width:auto;';
-                var height = height !== undefined ? 'height:' + height + 'px;' : 'height:auto;';
-                container.style.cssText += ';' + width + height + ';';
             }
         },
         getContainerOffset: function(node, offset) {
@@ -608,7 +585,6 @@
                     maxRowAndCol = this.getMaxRowAndCol(opt, data);
                 // 设置网格容器
                 view.setContainerAttr(opt.container, opt, opt.draggable, opt.draggable);
-                view.setContainerWH(opt.container, maxRowAndCol.col * opt.cellW, maxRowAndCol.row * opt.cellH);
                 // 重绘
                 this.sortData(data)
                     .buildArea(area, maxRowAndCol.row, maxRowAndCol.col)
@@ -624,7 +600,6 @@
         resize: function (containerW, containerH) {
             var opt = this.opt,
                 container = opt.container;
-            view.setContainerWH(opt.container);
             this.computeCellScale(opt);
             this.load();
         },
