@@ -2,7 +2,7 @@
 /**
  * Copyright (c) 2016 tm-roamer
  * https://github.com/PT-FED/pt-flowgrid
- * version: 1.0.3
+ * version: 1.0.4
  * 描述: 可拖拽流式布局
  * 原则和思路:  不依赖任何框架和类库, 通过指定classname进行配置, 实现view层的拖拽, 只和css打交道.
  * 兼容性: ie11+
@@ -21,7 +21,7 @@
 })(window.pt || window, function (flowgrid) {
 
     // 常量
-    var THROTTLE_TIME = 12,                                // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
+    var THROTTLE_TIME = 10,                                // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
         MEDIA_QUERY_SMALL = 768,                           // 分辨率768px
         MEDIA_QUERY_MID = 992,                             // 分辨率992px
         MEDIA_QUERY_BIG = 1200,                            // 分辨率1200px
@@ -297,6 +297,8 @@
                 containerOffset = view.getContainerOffset(container, {top: 0, left: 0}),
                 containerX = containerOffset.left,
                 containerY = containerOffset.top,
+                eventX = event.pageX,
+                eventY = event.pageY,
                 maxW = container.clientWidth;
             var x = translateX + dx;
             var y = translateY + dy;
@@ -753,11 +755,14 @@
         delete: function (id, isload) {
             var self = this,
                 data = this.data,
-                index = this.query(id).index,
-                arr = data.splice(index, 1);
+                area = this.area,
+                queryNode = this.query(id),
+                index = queryNode.index,
+                node = queryNode.node;
+            var arr = data.splice(index, 1);
             view.remove(id);
             delete this.elements[id];
-            this.load(isload);
+            this.clearNodeInArea(area, node).load(isload);
             asyncFun(function () {
                 self.opt.onDeleteNode && self.opt.onDeleteNode(self.elements[id], arr[0]);
             });
@@ -912,6 +917,7 @@
             for (r = node.y, rlen = node.y + node.h; r < rlen; r++)
                 for (c = node.x, clen = node.x + node.w; c < clen; c++)
                     area[r] && (area[r][c] = undefined);
+            return this;
         },
         clone: function (node) {
             var obj = {};
@@ -948,7 +954,7 @@
     }
 
     flowgrid = {
-        version: "1.0.3",
+        version: "1.0.4",
         instance: instance,
         destroy: destroy
     };
