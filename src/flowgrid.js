@@ -187,22 +187,29 @@
             }
         },
         mousemove: function (event) {
-            var x = Math.abs(event.pageX - this.pageX);
-            var y = Math.abs(event.pageY - this.pageY);
-            if (dragdrop.isDrag && (x >= this.distance || y >= this.distance)) {
-                throttle(new Date().getTime()) && dragdrop.drag(event);
+            if (dragdrop.isDrag) {
+                var x = Math.abs(event.pageX - this.pageX);
+                var y = Math.abs(event.pageY - this.pageY);
+                this.triggerDistance = this.distance ? (x >= this.distance || y >= this.distance) : false;
+                if (this.triggerDistance) {
+                    throttle(new Date().getTime()) && dragdrop.drag(event);    
+                }
             }
         },
         mouseup: function (event) {
             if (dragdrop.isDrag) {
+                var triggerDistance = this.triggerDistance;
                 var isResize = dragdrop.isResize;
                 var grid = dragdrop.grid;
                 var node = grid.clone(dragdrop.dragNode);
                 asyncFun(function () {
-                    isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, node)
-                        : grid.opt.onDragEnd(event, dragdrop.dragElement, node);
+                    if (triggerDistance) {
+                        isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, node)
+                            : grid.opt.onDragEnd(event, dragdrop.dragElement, node);    
+                    }
                 });
                 dragdrop.dragend(event);
+                this.triggerDistance = false;
             }
         },
         click: function (event) {
@@ -307,7 +314,7 @@
             var nodeY = Math.round(y / opt.cellH_Int);
             // 判断坐标是否变化
             if (node.x !== nodeX || node.y !== nodeY) {
-                grid.clearNodeInArea(grid.area, node);
+                grid.replaceNodeInArea(grid.area, node);
                 node.x = nodeX;
                 node.y = nodeY;
                 grid.checkIndexIsOutOf(grid.area, node, this.isResize);
@@ -344,7 +351,7 @@
             var nodeW = Math.ceil(eleW / opt.cellW_Int),
                 nodeH = Math.ceil(eleH / opt.cellH_Int);
             if (node.w !== nodeW || node.h !== nodeH) {
-                grid.clearNodeInArea(grid.area, node);
+                grid.replaceNodeInArea(grid.area, node);
                 node.w = nodeW;
                 node.h = nodeH;
                 grid.checkIndexIsOutOf(grid.area, node, this.isResize);
@@ -354,10 +361,11 @@
         },
         dragend: function (event) {
             if (!this.dragNode.node) return;
-            var grid = this.grid;
-            this.dragNode.node.id = this.dragNode.id;
+            var grid = this.grid,
+                node = this.dragNode.node;
+            node.id = this.dragNode.id;
             // 替换占位符
-            view.update(grid, grid.elements[this.dragNode.node.id], this.dragNode.node);
+            view.update(grid, grid.elements[node.id], node);
             // 清理临时样式(结束拖拽)
             this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_ANIMATE;
             // 清理临时变量
@@ -697,14 +705,15 @@
         },
         // 取得节点空位
         getVacant: function (w, h) {
-            return this.addAutoNode(this.area, {x: 0, y: 0, w: w, h: h});
+            return this.addAutoNode(this.area, this.data, {x: 0, y: 0, w: w, h: h});
         },
         // 自动扫描空位添加节点
-        addAutoNode: function (area, node) {
+        addAutoNode: function (area, data, node) {
+            if (data.length === 0) return node;
             var r, c;
-            for (r = 0; r < area.length; r = r + node.h) {
+            for (r = 0; r < area.length; r = r + 1) {
                 node.y = r;
-                for (c = 0; c < area[0].length; c = c + node.w) {
+                for (c = 0; c < area[0].length; c = c + 1) {
                     node.x = c;
                     if (!this.collision(area, node))
                         return node;
@@ -737,7 +746,7 @@
             var arr = data.splice(index, 1);
             view.remove(id);
             delete this.elements[id];
-            this.clearNodeInArea(area, node).load(isload);
+            this.replaceNodeInArea(area, node).load(isload);
             asyncFun(function () {
                 self.opt.onDeleteNode && self.opt.onDeleteNode(self.elements[id], arr[0]);
             });
@@ -877,21 +886,19 @@
         },
         // 上移
         moveUp: function (area, node, newRow) {
-            // 清除区域中的节点
-            this.clearNodeInArea(area, node);
-            // 在刷进去
+            this.replaceNodeInArea(area, node);
             var r, c, rlen, clen;
             node.y = newRow;
             for (r = node.y, rlen = node.y + node.h; r < rlen; r++)
                 for (c = node.x, clen = node.x + node.w; c < clen; c++)
                     area[r][c] = node.id;
         },
-        // 清除区域中的节点
-        clearNodeInArea: function (area, node) {
+        // 替换区域中的节点
+        replaceNodeInArea: function (area, node, id) {
             var r, c, rlen, clen;
             for (r = node.y, rlen = node.y + node.h; r < rlen; r++)
                 for (c = node.x, clen = node.x + node.w; c < clen; c++)
-                    area[r] && (area[r][c] = undefined);
+                    area[r] && (area[r][c] = id);
             return this;
         },
         clone: function (node) {
