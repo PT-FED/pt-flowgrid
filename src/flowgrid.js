@@ -21,7 +21,7 @@
 })(window.pt || window, function (flowgrid) {
 
     // 常量
-    var THROTTLE_TIME = 10,                                // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
+    var THROTTLE_TIME = 13,                                // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
         MEDIA_QUERY_SMALL = 768,                           // 分辨率768px
         MEDIA_QUERY_MID = 992,                             // 分辨率992px
         MEDIA_QUERY_BIG = 1200,                            // 分辨率1200px
@@ -668,7 +668,9 @@
         },
         // 取得区域中的最大行和列
         getMaxRowAndCol: function (opt, data) {
-            var i, n, len, max = {row: opt.row, col: opt.col};
+            var opt = opt || this.opt,
+                data = data || this.data,
+                i, n, len, max = {row: opt.row, col: opt.col};
             if (data && data.length > 0) {
                 for (i = 0, len = data.length; i < len; i++) {
                     n = data[i];
@@ -710,11 +712,14 @@
         // 自动扫描空位添加节点
         addAutoNode: function (area, data, node) {
             if (data.length === 0) return node;
-            var r, c;
+            var r, c, maxCol = area[0].length;
             for (r = 0; r < area.length; r = r + 1) {
                 node.y = r;
                 for (c = 0; c < area[0].length; c = c + 1) {
                     node.x = c;
+                    if (node.x + node.w > maxCol) {
+                        node.x = 0;
+                    }
                     if (!this.collision(area, node))
                         return node;
                 }
