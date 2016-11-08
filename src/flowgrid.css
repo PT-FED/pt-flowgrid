@@ -5,11 +5,11 @@
     z-index: 1;
     -webkit-user-select:none;
     -moz-user-select:none;
-    transition: height 0.15s, width 0.15s;
+    /*transition: height 0.15s, width 0.15s;*/
     /* chrome transition blink chrome的闪屏bug */
-    -webkit-transform: translate3d(0,0,0);  /*开启硬件加速*/
-    -webkit-backface-visibility: hidden;/*（设置进行转换的元素的背面在面对用户时是否可见：隐藏）*/
-    -webkit-transform-style: preserve-3d; /*（设置内嵌的元素在 3D 空间如何呈现：保留 3D ）*/
+    /*-webkit-transform: translate3d(0,0,0);  /*开启硬件加速*/*/
+    /*-webkit-backface-visibility: hidden;/*（设置进行转换的元素的背面在面对用户时是否可见：隐藏）*/*/
+    /*-webkit-transform-style: preserve-3d; /*（设置内嵌的元素在 3D 空间如何呈现：保留 3D ）*/*/
 }
 .pt-flowgrid-container[data-fg-draggable="false"] .pt-flowgrid-item-drag {
     display: none;

@@ -191,7 +191,7 @@
                 var x = Math.abs(event.pageX - this.pageX);
                 var y = Math.abs(event.pageY - this.pageY);
                 this.triggerDistance = this.distance ? (x >= this.distance || y >= this.distance) : false;
-                if (this.triggerDistance) {
+                if (this.triggerDistance || dragdrop.isResize) {
                     throttle(new Date().getTime()) && dragdrop.drag(event);    
                 }
             }
@@ -267,46 +267,47 @@
             }
         },
         drag: function (event) {
-            var self = this;
-            if (!self.dragNode.node) return;
-            var grid = self.grid,
-                opt = grid.opt;
-            // 计算坐标
-            self.prevX || (self.prevX = event.pageX);
-            self.prevY || (self.prevY = event.pageY);
-            // 保存坐标
-            self.currentX = event.pageX;
-            self.currentY = event.pageY;
-            // 计算位移
-            var dx = self.currentX - self.prevX;
-            var dy = self.currentY - self.prevY;
-            // 触发机制 (优化, 减少触发次数)
-            if ((-2 < dx && dx < 2) && (-2 < dy && dy < 2)) return;
-            // 当前坐标变成上一次的坐标
-            self.prevX = self.currentX;
-            self.prevY = self.currentY;
-            // 相对父元素的偏移坐标x,y
-            var translate = this.dragElement.style.transform,
+            if (!this.dragNode.node) return;
+            var grid = this.grid,
+                opt = grid.opt,
+                container = opt.container,
+                containerOffset = view.getOffset(container),    // 取得容器偏移
+                // 相对父元素的偏移坐标x,y
+                translate = this.dragElement.style.transform,
                 value = translate.replace(/translate.*\(/ig, '').replace(/\).*$/ig, '').replace(/px/ig, '').split(','),
-                translateX = value[0] * 1,
-                translateY = value[1] * 1;
+                info = {
+                    containerX: containerOffset.left,
+                    containerY: containerOffset.top,
+                    containerW: container.clientWidth,
+                    translateX: value[0] * 1,
+                    translateY: value[1] * 1
+                };
+            // 赋初值
+            this.prevX || (this.prevX = event.pageX);
+            this.prevY || (this.prevY = event.pageY);
+            // 计算位移
+            info.dx = event.pageX - this.prevX;
+            info.dy = event.pageY - this.prevY;
+            // 保存当前坐标变成上一次的坐标
+            this.prevX = event.pageX;
+            this.prevY = event.pageY;
+            // 转换坐标
+            info.eventX = event.pageX - info.containerX;
+            info.eventY = event.pageY - info.containerY;
             // 判断是不是放大缩小
             if (this.isResize) {
-                this.resize(event, opt, dx, dy, translateX, translateY, grid);
+                this.resize(event, opt, info, grid);
             } else {
-                this.changeLocation(event, opt, dx, dy, translateX, translateY, grid);
+                // 计算偏移
+                this.eventOffsetX || (this.eventOffsetX = info.eventX - info.translateX);
+                this.eventOffsetY || (this.eventOffsetY = info.eventY - info.translateY);
+                this.changeLocation(event, opt, info, grid);
             }
         },
-        changeLocation: function (event, opt, dx, dy, translateX, translateY, grid) {
+        changeLocation: function (event, opt, info, grid) {
             var node = this.dragNode.node,
-                nodeW = node.w * opt.cellW_Int - opt.padding.left - opt.padding.right,
-                container = opt.container,
-                containerOffset = view.getContainerOffset(container, {top: 0, left: 0}),
-                containerX = containerOffset.left,
-                containerY = containerOffset.top,
-                containerW = container.clientWidth;
-            var x = translateX + dx;
-            var y = translateY + dy;
+                x = info.eventX - this.eventOffsetX,
+                y = info.eventY - this.eventOffsetY;
             // 计算坐标
             this.dragElement.style.cssText += ';transform: translate(' + x + 'px,' + y + 'px);';
             // 当前拖拽节点的坐标, 转换成对齐网格的坐标
@@ -318,44 +319,38 @@
                 node.x = nodeX;
                 node.y = nodeY;
                 grid.checkIndexIsOutOf(grid.area, node, this.isResize);
-                grid.overlap(grid.data, node, dx, dy, this.isResize);
+                grid.overlap(grid.data, node, info.dx, info.dy, this.isResize);
                 grid.load();
             }
         },
-        resize: function (event, opt, dx, dy, translateX, translateY, grid) {
-            var ele = this.dragElement,
-                node = this.dragNode.node,
-                container = opt.container,
-                containerOffset = view.getContainerOffset(container, {top: 0, left: 0}),
-                containerX = containerOffset.left,
-                containerY = containerOffset.top,
-                containerW = container.clientWidth,
+        resize: function (event, opt, info, grid) {
+            var node = this.dragNode.node,
                 minW = node.minW * opt.cellW_Int - opt.padding.left - opt.padding.right,
                 minH = node.minH * opt.cellH_Int - opt.padding.top - opt.padding.bottom,
-                eventW = event.pageX - containerX - translateX,
-                eventH = event.pageY - containerY - translateY;
-            var eleW = eventW,
-                eleH = eventH;
+                eventW = info.eventX - info.translateX + opt.overflow,
+                eventH = info.eventY - info.translateY + opt.overflow,
+                w = eventW,
+                h = eventH;
             // 判断最小宽
             if (eventW < minW)
-                eleW = minW - opt.overflow;
+                w = minW - opt.overflow;
             // 判断最小高
             if (eventH < minH)
-                eleH = minH - opt.overflow;
+                h = minH - opt.overflow;
             // 判断最大宽
-            if (eventW + translateX > containerW)
-                eleW = containerW - translateX + opt.overflow;
+            if (eventW + info.translateX > info.containerW)
+                w = info.containerW - info.translateX + opt.overflow;
             // 设置宽高
-            ele.style.cssText += ';width: ' + eleW + 'px; height: ' + eleH + 'px;';
+            this.dragElement.style.cssText += ';width: ' + w + 'px; height: ' + h + 'px;';
             // 判断宽高是否变化
-            var nodeW = Math.ceil(eleW / opt.cellW_Int),
-                nodeH = Math.ceil(eleH / opt.cellH_Int);
+            var nodeW = Math.ceil(w / opt.cellW_Int),
+                nodeH = Math.ceil(h / opt.cellH_Int);
             if (node.w !== nodeW || node.h !== nodeH) {
                 grid.replaceNodeInArea(grid.area, node);
                 node.w = nodeW;
                 node.h = nodeH;
                 grid.checkIndexIsOutOf(grid.area, node, this.isResize);
-                grid.overlap(grid.data, node, dx, dy, this.isResize);
+                grid.overlap(grid.data, node, info.dx, info.dy, this.isResize);
                 grid.load();
             }
         },
@@ -377,8 +372,8 @@
             // 清理临时坐标
             this.prevX = undefined;
             this.prevY = undefined;
-            this.currentX = undefined;
-            this.currentY = undefined;
+            this.eventOffsetX = undefined;
+            this.eventOffsetY = undefined;
             // 移除临时dom(占位符)
             view.remove(PLACEHOLDER);
             delete grid.elements[PLACEHOLDER];
@@ -425,11 +420,12 @@
                 }
             }
         },
-        getContainerOffset: function(node, offset) {
+        getOffset: function(node, offset) {
+            offset = offset ? offset : {top: 0, left: 0};
             if (node === null || node === document) return offset;
                 offset.top += node.offsetTop;
                 offset.left += node.offsetLeft;
-            return this.getContainerOffset(node.offsetParent, offset);
+            return this.getOffset(node.offsetParent, offset);
         },
         searchUp: function (node, type) {
             if (node === handleEvent.body || node === document) return undefined;   // 向上递归到body就停
@@ -926,10 +922,10 @@
             container = container[0];
         // 设置编号
         var index = GRID_CONTAINER + cache.count++;
-        if (!container.getAttribute(GRID_CONTAINER_INDEX))
+        if (!container.getAttribute(GRID_CONTAINER_INDEX)) {
             container.setAttribute(GRID_CONTAINER_INDEX, index);
+        }
         cache[index] = new Grid(options, container, originalData);
-        ;
         return cache[index];
     }
 
