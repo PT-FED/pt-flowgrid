@@ -47,7 +47,7 @@
         row: 7,                                            // 网格布局的默认行,默认7行
         col: 12,                                           // 网格布局的默认列,默认12列
         container: null,                                   // 网格容器的dom对象
-        distance: 10,                                      // 触发拖拽的拖拽距离,默认10px
+        distance: 5,                                       // 触发拖拽的拖拽距离,默认5px
         draggable: true,                                   // 是否允许拖拽, 默认允许
         resizable: true,                                   // 是否允许缩放, 默认允许
         isDragBar: false,                                  // 是否启用拖拽句柄, 默认不启明
@@ -587,7 +587,6 @@
                     data = this.data,
                     elements = this.elements,
                     maxRowAndCol = this.getMaxRowAndCol(opt, data);
-                // 设置网格容器
                 view.setContainerAttr(opt.container, opt, opt.draggable, opt.draggable);
                 // 重绘
                 this.sortData(data)
