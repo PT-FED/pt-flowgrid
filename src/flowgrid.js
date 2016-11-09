@@ -2,7 +2,7 @@
 /**
  * Copyright (c) 2016 tm-roamer
  * https://github.com/PT-FED/pt-flowgrid
- * version: 1.0.4
+ * version: 1.0.5
  * 描述: 可拖拽流式布局
  * 原则和思路:  不依赖任何框架和类库, 通过指定classname进行配置, 实现view层的拖拽, 只和css打交道.
  * 兼容性: ie11+
@@ -534,13 +534,14 @@
             originalData = options;
             options = undefined;
         }
-        this.init(extend(setting, options), container, originalData);
+        this.init(options, container, originalData);
     }
 
     // 网格对象原型
     Grid.prototype = {
         constructor: Grid,
-        init: function (opt, container, originalData) {
+        init: function (options, container, originalData) {
+            var opt = extend(setting, options);
             this.originalData = [];
             this.area = [];
             this.data = [];
@@ -564,6 +565,13 @@
             this.area = null;
             this.data = null;
             this.elements = null;
+            return this;
+        },
+        clean: function() {
+            grid.originalData = [];
+            grid.area = [];
+            grid.data = [];
+            grid.elements = {};
             return this;
         },
         loadDom: function (isload) {
@@ -936,7 +944,7 @@
     }
 
     flowgrid = {
-        version: "1.0.4",
+        version: "1.0.5",
         instance: instance,
         destroy: destroy
     };

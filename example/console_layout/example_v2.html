@@ -19,20 +19,49 @@
                 padding-left: 15px;
                 padding-right: 15px;
             }
+            a {
+                height: 700px;
+                display: block;
+                padding: 50px;
+                background-color: blue;
+            }
             .pt-flowgrid-container {
+                /*margin-top: 50px;
+                margin-left: 150px;
+                margin-right: 150px;*/
                 /*width: 900px !important;*/
                 background-color: #b3ee22;
                 height: 100%;
+            }
+            .pf-flowgrid-item-content {
+                margin-top: 50px;
+                height: 100px;
+                background: red;
             }
         </style>
     </head>
     <body>
     <!-- <a href="javascript:void(0);" id="add">新增</a> -->
-    
+        <div id="d0" style="margin-top: 150px;">
+            <div id="d1" style="position: absolute; top:50px; left: 50px; height: 1150px; width: 100%;background: red;">
+                
+                <div id="d2" style="position: relative; top:50px; left: 50px; 
+                height: 1150px; width: 100%; background: yellow">
+                                        
+                    <!-- <div class="d1" style="position: absolute; top:50px; left: 5px; background: red;"> -->
 
+                    <a>
         <div class="pt-flowgrid-container" id="a">
             
         </div>
+        </a>
+
+                </div>
+
+            </div>
+        </div>
+        
+        
 
         <div class="pt-flowgrid-container" id="b">
             
@@ -40,12 +69,12 @@
 
         <script type="text/javascript">
 
-            var grid = flowgrid.instance( {isDragBar:true}); //{draggable:false,resizable:false}
+            var grid = flowgrid.instance( ); //{draggable:false,resizable:false} {isDragBar:true}
 
             // var b = flowgrid.instance({}, document.getElementById('b'));
             
             var data = [            // x(col), y(row), w(width), h(heigth)
-            //   {x:0,y:3,w:3,h:3}
+              // {x:0,y:3,w:3,h:3}
             // , {x:0,y:2,w:3,h:1}
             // , {x:0,y:0,w:3,h:2}
             // , {x:1,y:4,w:2,h:2}
@@ -74,12 +103,26 @@
             // ];
             // b.setData(data2);
 
+         var  getContainerOffset = function(node, offset) {
+            if (node === null || node === document) return offset;
+            // var position = node.style && node.style.position;
+            // if (position === 'relative' || position === 'absolute' || position === 'fixed') {
+                offset.top += node.offsetTop;
+                offset.left += node.offsetLeft;    
+            // }
+            return this.getContainerOffset(node.offsetParent, offset);
+        }
+
             // 新增
-            var add = document.getElementById('add');
+            var add = document.getElementById('d2');
             add && add.addEventListener('click', function(event) {
-                node = grid.add();
-                console_layout();
+                console.log(event);
+                // node = grid.add();
+                // console_layout();
+                console.log(getContainerOffset(event.target, {top:0,left:0}) );
             }, false);
+
+           
 
             // 控制台展示
             function console_layout() {
