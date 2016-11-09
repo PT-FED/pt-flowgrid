@@ -568,10 +568,10 @@
             return this;
         },
         clean: function() {
-            grid.originalData = [];
-            grid.area = [];
-            grid.data = [];
-            grid.elements = {};
+            this.originalData = [];
+            this.area = [];
+            this.data = [];
+            this.elements = {};
             return this;
         },
         loadDom: function (isload) {
