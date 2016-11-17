@@ -2,18 +2,17 @@
 /**
  * Copyright (c) 2016 tm-roamer
  * https://github.com/PT-FED/pt-flowgrid
- * version: 1.0.5
+ * version: 1.1.0
  * 描述: 可拖拽流式布局
  * 原则和思路:  不依赖任何框架和类库, 通过指定classname进行配置, 实现view层的拖拽, 只和css打交道.
  * 兼容性: ie11+
- * 支持: requirejs和commonjs和seajs,
+ * 支持: commonjs和requirejs与seajs,
  */
 ;(function (parent, fun) {
     if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
         module.exports = fun();
-    } else if (typeof define === 'function' && typeof define.amd === 'object') {
-        define(fun);
-    } else if (typeof define === 'function' && typeof define.cmd === 'object') {
+    } else if (typeof define === 'function' 
+                && (typeof define.amd === 'object' || typeof define.cmd === 'object') ) {
         define(fun);
     } else {
         parent.flowgrid = fun();
@@ -21,29 +20,32 @@
 })(window.pt || window, function (flowgrid) {
 
     // 常量
-    var THROTTLE_TIME = 13,                                // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
-        MEDIA_QUERY_SMALL = 768,                           // 分辨率768px
-        MEDIA_QUERY_MID = 992,                             // 分辨率992px
-        MEDIA_QUERY_BIG = 1200,                            // 分辨率1200px
-        GRID_ITEM = 'pt-flowgrid-item',                    // 拖拽块classname
-        GRID_ITEM_ZOOM = 'pt-flowgrid-item-zoom',          // 拖拽块内部放大缩小div的classname
-        GRID_ITEM_DRAG = 'pt-flowgrid-item-drag',          // 拖拽块可以进行拖拽div的classname
-        GRID_ITEM_CONTENT = 'pf-flowgrid-item-content',    // 拖拽块的展示内容区div的classname
-        GRID_ITEM_DRAG_SVG = 'pt-flowgrid-item-drag-svg',  // 拖拽块可以进行拖拽div里面svg的classname
-        GRID_ITEM_ANIMATE = 'pt-flowgrid-item-animate',    // 拖拽块classname 动画效果
-        GRID_ITEM_GRAG_DROP = 'pt-flowgrid-item-dragdrop', // 正在拖拽的块classname
-        GRID_ITEM_PLACEHOLDER = 'pt-flowgrid-item-placeholder',  // 拖拽块的占位符
-        GRID_ITEM_DATA_ID = 'data-fg-id',                  // 拖拽块的数据标识id
-        GRID_CONTAINER = 'pt-flowgrid-container',          // 拖拽容器classname
-        GRID_CONTAINER_DRAGGABLE = 'data-fg-draggable',    // 拖拽容器拖拽属性
-        GRID_CONTAINER_RESIZABLE = 'data-fg-resizable',    // 拖拽容器缩放属性
-        GRID_CONTAINER_INDEX = 'data-container-index',     // 拖拽容器编号
-        PLACEHOLDER = 'placeholder';                       // 占位符
+    var THROTTLE_TIME = 14,                              // 节流函数的间隔时间单位ms, FPS = 1000 / THROTTLE_TIME
+        MEDIA_QUERY_SMALL = 768,                         // 分辨率768px
+        MEDIA_QUERY_MID = 992,                           // 分辨率992px
+        MEDIA_QUERY_BIG = 1200,                          // 分辨率1200px
+        FG_CONTAINER = 'fg-container',                   // 拖拽容器classname
+        FG_LAYOUT = 'fg-layout',                         // 拖拽容器的布局区classname
+        FG_LAYOUT_DRAGGABLE = 'data-fg-draggable',       // 布局区拖拽属性
+        FG_LAYOUT_RESIZABLE = 'data-fg-resizable',       // 布局区缩放属性
+        FG_LAYOUT_INDEX = 'data-fg-index',               // 布局区编号
+        FG_ITEM = 'fg-item',                             // 拖拽块classname
+        FG_ITEM_ANIMATE = 'fg-item-animate',             // 拖拽块classname 动画效果
+        FG_ITEM_CONTENT = 'fg-item-content',             // 拖拽块的展示内容区div的classname
+        FG_ITEM_ZOOM_BAR = 'fg-zoom-bar',                // 拖拽块内部放大缩小div的classname
+        FG_ITEM_ZOOM_BAR_ICO = 'fg-zoom-bar-ico',        // 拖拽块内部放大缩小div里面图标的classname
+        FG_ITEM_DRAG_BAR = 'fg-drag-bar',                // 拖拽块可以进行拖拽div的classname
+        FG_ITEM_DRAG_BAR_ICO = 'fg-drag-bar-ico',        // 拖拽块可以进行拖拽div里面图标的classname
+        FG_ITEM_GRAG_DROP = 'fg-item-dragdrop',          // 正在拖拽的块classname
+        FG_ITEM_PLACEHOLDER = 'fg-item-placeholder',     // 拖拽块的占位符
+        FG_ITEM_DATA_ID = 'data-fg-id',                  // 拖拽块的数据标识id
+        PLACEHOLDER = 'placeholder';                     // 占位符
 
     // 默认设置
     var f = function () {
     };
     var setting = {
+        className: '',                                     // 自定义换肤class
         row: 7,                                            // 网格布局的默认行,默认7行
         col: 12,                                           // 网格布局的默认列,默认12列
         container: null,                                   // 网格容器的dom对象
@@ -82,74 +84,74 @@
     // 网格对象的缓存对象
     var cache = {
         count: 0,
-        getGrid: function (node) {
-            var container = view.searchUp(node, GRID_CONTAINER);
-            return cache[container.getAttribute(GRID_CONTAINER_INDEX)]
+        get: function (node) {
+            var container = view.searchUp(node, FG_LAYOUT);
+            return cache[container.getAttribute(FG_LAYOUT_INDEX)]
         }
     };
 
-    // 属性拷贝
-    function extend(mod, opt) {
-        if (!opt) return mod;
-        var conf = {};
-        for (var attr in mod) {
-            if (typeof opt[attr] !== "undefined") {
-                conf[attr] = opt[attr];
-            } else {
-                conf[attr] = mod[attr];
+    // 工具类
+    var utils = {
+        // 属性拷贝
+        extend: function(mod, opt) {
+            if (!opt) return mod;
+            var conf = {};
+            for (var attr in mod) {
+                if (typeof opt[attr] !== "undefined") {
+                    conf[attr] = opt[attr];
+                } else {
+                    conf[attr] = mod[attr];
+                }
             }
-        }
-        return conf;
-    }
-
-    // 空对象
-    function isEmptyObject(obj) {
-        for (var i in obj) {
-            return false;
-        }
-        return true;
-    }
-
-    // 节流函数
-    function throttle(now) {
-        var time = new Date().getTime();
-        throttle = function (now) {
-            if (now - time > THROTTLE_TIME) {
-                time = now;
-                return true;
+            return conf;
+        },
+        // 空对象
+        isEmptyObject: function (obj) {
+            for (var i in obj) {
+                return false;
             }
-            return false;
-        };
-        throttle(now);
-    }
-
-    // 异步执行回调
-    function asyncFun(ck) {
-        setTimeout(function () {
-            ck && typeof ck === 'function' && ck();
-        }, 0);
-    }
-
-    // 构建节点
-    function buildNode(n, id, opt) {
-        var node = {
-            id: n.id || id,
-            x: n.x,
-            y: n.y,
-            w: n.w || n.minW || opt.nodeMinW,
-            h: n.h || n.minH || opt.nodeMinH,
-            minW: n.minW || opt.nodeMinW,
-            minH: n.minH || opt.nodeMinH,
-        };
-        return node;
-    }
+            return true;
+        },
+        // 节流函数
+        throttle: function (now) {
+            var time = new Date().getTime();
+            this.throttle = function (now) {
+                if (now - time > THROTTLE_TIME) {
+                    time = now;
+                    return true;
+                }
+                return false;
+            };
+            this.throttle(now);
+        },
+        // 执行回调
+        callbackFun: function (ck) {
+            try {
+                typeof ck === 'function' && ck();
+            } catch (ex) {
+                throw new Error('flowgrid callback exception:' + ex);
+            }
+        },
+        // 构建节点
+        buildNode: function (n, id, opt) {
+            var node = {
+                id: n.id || id,
+                x: n.x,
+                y: n.y,
+                w: n.w || n.minW || opt.nodeMinW,
+                h: n.h || n.minH || opt.nodeMinH,
+                minW: n.minW || opt.nodeMinW,
+                minH: n.minH || opt.nodeMinH,
+            };
+            return node;
+        }
+    };
 
     // 事件处理对象
     var handleEvent = {
-        init: function (isbind, body) {
+        init: function (isbind) {
             if (this.isbind) return;
             this.isbind = isbind;
-            this.body = body;
             this.unbindEvent();
             this.bindEvent();
         },
@@ -170,18 +172,18 @@
             this.isbind = false;
         },
         mousedown: function (event) {
-            var node = this.node = view.searchUp(event.target, GRID_ITEM)
+            var node = this.node = view.searchUp(event.target, FG_ITEM)
             if (node) {
                 dragdrop.dragstart(event, node);
                 var isResize = dragdrop.isResize;
-                var grid = dragdrop.grid;
-                this.distance = grid.opt.distance;
+                var flowgrid = dragdrop.flowgrid;
+                this.distance = flowgrid.opt.distance;
                 this.pageX = event.pageX;
                 this.pageY = event.pageY;
-                if (grid.opt.draggable) {
-                    asyncFun(function () {
-                        isResize ? grid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode)
-                            : grid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);
+                if (flowgrid.opt.draggable) {
+                    utils.callbackFun(function () {
+                        isResize ? flowgrid.opt.onResizeStart(event, dragdrop.dragElement, dragdrop.dragNode)
+                            : flowgrid.opt.onDragStart(event, dragdrop.dragElement, dragdrop.dragNode);
                     })
                 }
             }
@@ -192,7 +194,7 @@
                 var y = Math.abs(event.pageY - this.pageY);
                 this.triggerDistance = this.distance ? (x >= this.distance || y >= this.distance) : false;
                 if (this.triggerDistance || dragdrop.isResize) {
-                    throttle(new Date().getTime()) && dragdrop.drag(event);    
+                    utils.throttle(new Date().getTime()) && dragdrop.drag(event);    
                 }
             }
         },
@@ -200,12 +202,12 @@
             if (dragdrop.isDrag) {
                 var triggerDistance = this.triggerDistance;
                 var isResize = dragdrop.isResize;
-                var grid = dragdrop.grid;
-                var node = grid.clone(dragdrop.dragNode);
-                asyncFun(function () {
+                var flowgrid = dragdrop.flowgrid;
+                var node = flowgrid.clone(dragdrop.dragNode);
+                utils.callbackFun(function () {
                     if (triggerDistance) {
-                        isResize ? grid.opt.onResizeEnd(event, dragdrop.dragElement, node)
-                            : grid.opt.onDragEnd(event, dragdrop.dragElement, node);    
+                        isResize ? flowgrid.opt.onResizeEnd(event, dragdrop.dragElement, node)
+                            : flowgrid.opt.onDragEnd(event, dragdrop.dragElement, node);    
                     }
                 });
                 dragdrop.dragend(event);
@@ -234,42 +236,39 @@
         },
         dragElement: null,          // 拖拽的dom节点
         dragstart: function (event, node) {
-            var className = event.target.className;
+            var classList = event.target.classList;
             // 取得网格对象
-            var grid = this.grid = cache.getGrid(node);
+            var flowgrid = this.flowgrid = cache.get(node);
             // 配置项, 禁用拖拽
-            if (!grid.opt.draggable) return;
-            // 判断是否拖拽
-            if (typeof className === 'string') {
-                var classes = className.split(" ");
-                if (classes.indexOf(GRID_ITEM_DRAG) === -1) {
-                    // 判断是否放大缩小
-                    if (classes.indexOf(GRID_ITEM_ZOOM) !== -1) {
-                        this.isResize = true;
-                    } else {
-                        // 如果有拖拽句柄的设置, 但没有选中, 则return
-                        if (grid.opt.isDragBar) return;
-                    }
+            if (!flowgrid.opt.draggable) return;
+            // 判断拖拽句柄的情况
+            if (!classList.contains(FG_ITEM_DRAG_BAR)) {
+                // 判断是否放大缩小
+                if (classList.contains(FG_ITEM_ZOOM_BAR)) {
+                    this.isResize = true;
+                } else {
+                    // 如果有拖拽句柄的设置, 但没有选中, 则return
+                    if (flowgrid.opt.isDragBar) return;
                 }
             }
             this.isDrag = true;
             this.dragElement = node;
             // 取得当前拖拽节点, 并替换当前拖拽节点id
-            var query = grid.query(node.getAttribute(GRID_ITEM_DATA_ID));
+            var query = flowgrid.query(node.getAttribute(FG_ITEM_DATA_ID));
             if (query) {
-                this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_GRAG_DROP;
+                this.dragElement.className = FG_ITEM + ' ' + FG_ITEM_GRAG_DROP;
                 this.dragNode.id = query.node.id;
                 this.dragNode.node = query.node;
                 this.dragNode.node.id = PLACEHOLDER;
                 // 新增占位符
-                var element = grid.elements[this.dragNode.node.id] = view.create(grid, this.dragNode.node);
-                grid.opt.container.appendChild(element);
+                var element = flowgrid.elements[this.dragNode.node.id] = view.create(flowgrid, this.dragNode.node);
+                flowgrid.opt.container.appendChild(element);
             }
         },
         drag: function (event) {
             if (!this.dragNode.node) return;
-            var grid = this.grid,
-                opt = grid.opt,
+            var flowgrid = this.flowgrid,
+                opt = flowgrid.opt,
                 container = opt.container,
                 containerOffset = view.getOffset(container),    // 取得容器偏移
                 // 相对父元素的偏移坐标x,y
@@ -296,15 +295,15 @@
             info.eventY = event.pageY - info.containerY;
             // 判断是不是放大缩小
             if (this.isResize) {
-                this.resize(event, opt, info, grid);
+                this.resize(event, opt, info, flowgrid);
             } else {
                 // 计算偏移
                 this.eventOffsetX || (this.eventOffsetX = info.eventX - info.translateX);
                 this.eventOffsetY || (this.eventOffsetY = info.eventY - info.translateY);
-                this.changeLocation(event, opt, info, grid);
+                this.changeLocation(event, opt, info, flowgrid);
             }
         },
-        changeLocation: function (event, opt, info, grid) {
+        changeLocation: function (event, opt, info, flowgrid) {
             var node = this.dragNode.node,
                 x = info.eventX - this.eventOffsetX,
                 y = info.eventY - this.eventOffsetY;
@@ -315,15 +314,15 @@
             var nodeY = Math.round(y / opt.cellH_Int);
             // 判断坐标是否变化
             if (node.x !== nodeX || node.y !== nodeY) {
-                grid.replaceNodeInArea(grid.area, node);
+                flowgrid.replaceNodeInArea(flowgrid.area, node);
                 node.x = nodeX;
                 node.y = nodeY;
-                grid.checkIndexIsOutOf(grid.area, node, this.isResize);
-                grid.overlap(grid.data, node, info.dx, info.dy, this.isResize);
-                grid.load();
+                flowgrid.checkIndexIsOutOf(flowgrid.area, node, this.isResize);
+                flowgrid.overlap(flowgrid.data, node, info.dx, info.dy, this.isResize);
+                flowgrid.load();
             }
         },
-        resize: function (event, opt, info, grid) {
+        resize: function (event, opt, info, flowgrid) {
             var node = this.dragNode.node,
                 minW = node.minW * opt.cellW_Int - opt.padding.left - opt.padding.right,
                 minH = node.minH * opt.cellH_Int - opt.padding.top - opt.padding.bottom,
@@ -346,25 +345,25 @@
             var nodeW = Math.ceil(w / opt.cellW_Int),
                 nodeH = Math.ceil(h / opt.cellH_Int);
             if (node.w !== nodeW || node.h !== nodeH) {
-                grid.replaceNodeInArea(grid.area, node);
+                flowgrid.replaceNodeInArea(flowgrid.area, node);
                 node.w = nodeW;
                 node.h = nodeH;
-                grid.checkIndexIsOutOf(grid.area, node, this.isResize);
-                grid.overlap(grid.data, node, info.dx, info.dy, this.isResize);
-                grid.load();
+                flowgrid.checkIndexIsOutOf(flowgrid.area, node, this.isResize);
+                flowgrid.overlap(flowgrid.data, node, info.dx, info.dy, this.isResize);
+                flowgrid.load();
             }
         },
         dragend: function (event) {
             if (!this.dragNode.node) return;
-            var grid = this.grid,
+            var flowgrid = this.flowgrid,
                 node = this.dragNode.node;
             node.id = this.dragNode.id;
             // 替换占位符
-            view.update(grid, grid.elements[node.id], node);
+            view.update(flowgrid, flowgrid.elements[node.id], node);
             // 清理临时样式(结束拖拽)
-            this.dragElement.className = GRID_ITEM + ' ' + GRID_ITEM_ANIMATE;
+            this.dragElement.className = FG_ITEM + ' ' + FG_ITEM_ANIMATE;
             // 清理临时变量
-            this.grid = null;
+            this.flowgrid = null;
             this.isDrag = false;
             this.isResize = false;
             this.dragNode.id = undefined;
@@ -376,19 +375,19 @@
             this.eventOffsetY = undefined;
             // 移除临时dom(占位符)
             view.remove(PLACEHOLDER);
-            delete grid.elements[PLACEHOLDER];
+            delete flowgrid.elements[PLACEHOLDER];
         }
     };
 
     // 展示对象, 操作dom
     var view = {
         // 转换初始化, 将初始dom转换成js对象
-        dom2obj: function (container, grid) {
+        dom2obj: function (container, flowgrid) {
             var i, len, ele, node, arr = [],
                 elements = container.children;
             for (i = 0, len = elements.length; i < len; i++) {
                 ele = elements[i];
-                if (ele.className.split(" ").indexOf(GRID_ITEM) !== -1) {
+                if (ele.classList.contains(FG_ITEM)) {
                     arr[i] = {
                         x: ele.getAttribute('data-fg-x') * 1,
                         y: ele.getAttribute('data-fg-y') * 1,
@@ -400,9 +399,9 @@
                     var id = ele.getAttribute('data-fg-id');
                     if (id) {
                         arr[i].id = id;
-                        grid.elements[id] = ele;
+                        flowgrid.elements[id] = ele;
                     } else {
-                        grid.elements[i] = ele;
+                        flowgrid.elements[i] = ele;
                     }
                 }
             }
@@ -412,11 +411,11 @@
             if (container) {
                 if (typeof draggable !== 'undefined') {
                     opt.draggable = !!draggable;
-                    opt.container.setAttribute(GRID_CONTAINER_DRAGGABLE, opt.draggable);
+                    opt.container.setAttribute(FG_LAYOUT_DRAGGABLE, opt.draggable);
                 }
                 if (typeof resizable !== 'undefined') {
                     opt.resizable = !!resizable;
-                    opt.container.setAttribute(GRID_CONTAINER_RESIZABLE, opt.resizable);
+                    opt.container.setAttribute(FG_LAYOUT_RESIZABLE, opt.resizable);
                 }
             }
         },
@@ -428,26 +427,19 @@
             return this.getOffset(node.offsetParent, offset);
         },
         searchUp: function (node, type) {
-            if (node === handleEvent.body || node === document) return undefined;   // 向上递归到body就停
-            var arr = typeof node.className === 'string' && node.className.split(' ');
-            if (arr) {
-                for (var i = 0, len = arr.length; i < len; i++) {
-                    if (arr[i] === type) {
-                        return node;
-                    }
-                }
-            }
+            if (node === document.body || node === document) return undefined;   // 向上递归到顶就停
+            if (node.classList.contains(type)) return node;
             return this.searchUp(node.parentNode, type);
         },
-        create: function (grid, node, className) {
+        create: function (flowgrid, node, className) {
             var item = document.createElement("div"),
                 zoom = document.createElement("div"),
                 content = document.createElement("div");
             // 是否配置了拖拽句柄
-            if (grid.opt.isDragBar) {
+            if (flowgrid.opt.isDragBar) {
                 var drag = document.createElement("div");
-                drag.className = GRID_ITEM_DRAG;
-                drag.innerHTML = '<svg class="' + GRID_ITEM_DRAG_SVG + '" viewBox="0 0 200 200"'
+                drag.className = FG_ITEM_DRAG_BAR;
+                drag.innerHTML = '<svg class="' + FG_ITEM_DRAG_BAR_ICO + '" viewBox="0 0 200 200"'
                     + 'version="1.1" xmlns="http://www.w3.org/2000/svg" '
                     + 'xmlns:xlink="http://www.w3.org/1999/xlink">'
                     + '<g class="transform-group">'
@@ -469,19 +461,23 @@
                     + 'c 36.377 0 36.377 36.383 36.377 36.383 v 181.92 Z M 220.924 548.383 Z"></path></g></g></svg>';
                 item.appendChild(drag);
             }
-            item.className = className ? className : (GRID_ITEM + ' ' + GRID_ITEM_ANIMATE);
-            zoom.className = GRID_ITEM_ZOOM;
-            content.className = GRID_ITEM_CONTENT;
+            item.className = className ? className : (FG_ITEM + ' ' + FG_ITEM_ANIMATE);
+            zoom.className = FG_ITEM_ZOOM_BAR;
+            content.className = FG_ITEM_CONTENT;
             item.appendChild(content);
             item.appendChild(zoom);
-            this.update(grid, item, node, className);
+            this.update(flowgrid, item, node, className);
             return item;
         },
-        update: function (grid, element, node, className) {
-            var opt = grid.opt;
+        update: function (flowgrid, element, node, className) {
+            var opt = flowgrid.opt;
+            // ??? 优化, 先计算好所有的统一加入改变如何 ??? 使用文档碎片。(document fragment)
+            // 1 先隐藏元素，修改完再显示。
+            // 2 使用文档碎片。(document fragment)
+            // 3 先创建一个文档元素的备份，修改备份，再添加会文档中
             if (element) {
-                element.className = className ? className : (GRID_ITEM + ' ' + GRID_ITEM_ANIMATE);
-                element.setAttribute(GRID_ITEM_DATA_ID, node.id);
+                element.className = className ? className : (FG_ITEM + ' ' + FG_ITEM_ANIMATE);
+                element.setAttribute(FG_ITEM_DATA_ID, node.id);
                 element.setAttribute('data-fg-x', node.x);
                 element.setAttribute('data-fg-y', node.y);
                 element.setAttribute('data-fg-w', node.w);
@@ -496,17 +492,17 @@
             container.innerHTML = '';
         },
         remove: function (id) {
-            var delElement = document.querySelector('div.' + GRID_ITEM + '[' + GRID_ITEM_DATA_ID + '="' + id + '"]');
+            var delElement = document.querySelector('div.' + FG_ITEM + '[' + FG_ITEM_DATA_ID + '="' + id + '"]');
             delElement && delElement.parentNode.removeChild(delElement);
         },
-        render: function (data, elements, container, grid) {
+        render: function (data, elements, container, flowgrid) {
             var i, len, node, element;
-            if (isEmptyObject(elements)) {
+            if (utils.isEmptyObject(elements)) {
                 var fragment = document.createDocumentFragment();
                 for (i = 0, len = data.length; i < len; i++) {
                     node = data[i];
                     if (node) {
-                        element = elements[node.id] = this.create(grid, node)
+                        element = elements[node.id] = this.create(flowgrid, node)
                         fragment.appendChild(element);
                     }
                 }
@@ -516,9 +512,9 @@
                     node = data[i];
                     if (node) {
                         if (elements[node.id]) {
-                            this.update(grid, elements[node.id], node)
+                            this.update(flowgrid, elements[node.id], node)
                         } else {
-                            element = elements[node.id] = this.create(grid, node)
+                            element = elements[node.id] = this.create(flowgrid, node)
                             container.appendChild(element);
                         }
                     }
@@ -528,7 +524,7 @@
     };
 
     // 网格对象
-    function Grid(options, container, originalData) {
+    function Flowgrid(options, container, originalData) {
         // 兼容多种配置情况
         if (Array.isArray(options) && originalData === undefined) {
             originalData = options;
@@ -538,10 +534,10 @@
     }
 
     // 网格对象原型
-    Grid.prototype = {
-        constructor: Grid,
+    Flowgrid.prototype = {
+        constructor: Flowgrid,
         init: function (options, container, originalData) {
-            var opt = extend(setting, options);
+            var opt = utils.extend(setting, options);
             this.originalData = [];
             this.area = [];
             this.data = [];
@@ -602,7 +598,7 @@
                     .putData(area, data)
                     .layout(area, data);
                 view.render(data, elements, opt.container, this);
-                asyncFun(function () {
+                utils.callbackFun(function () {
                     self.opt.onLoad && self.opt.onLoad();
                 });
             }
@@ -633,7 +629,7 @@
                     data = this.data = [];
                 // 制作渲染数据
                 originalData.forEach(function (node, idx) {
-                    data[idx] = buildNode(node, idx, opt);
+                    data[idx] = utils.buildNode(node, idx, opt);
                 });
                 // 再刷新
                 this.load(isload);
@@ -694,16 +690,16 @@
                 area = this.area,
                 data = this.data;
             if (n) {
-                node = buildNode(n, (n.id || data.length), opt);
+                node = utils.buildNode(n, (n.id || data.length), opt);
                 this.checkIndexIsOutOf(area, node);
                 this.overlap(data, node);
             } else {
-                var node = buildNode(opt.autoAddCell, data.length, opt);
+                var node = utils.buildNode(opt.autoAddCell, data.length, opt);
                 node = this.addAutoNode(area, node);
             }
             data[data.length] = node;
             this.load(isload);
-            asyncFun(function () {
+            utils.callbackFun(function () {
                 self.opt.onAddNode && self.opt.onAddNode(self.elements[node.id], node);
             })
             return node;
@@ -755,7 +751,7 @@
             view.remove(id);
             delete this.elements[id];
             this.replaceNodeInArea(area, node).load(isload);
-            asyncFun(function () {
+            utils.callbackFun(function () {
                 self.opt.onDeleteNode && self.opt.onDeleteNode(self.elements[id], arr[0]);
             });
             return arr[0];
@@ -924,27 +920,27 @@
         handleEvent.init(true, document.body);
         // 判断容器
         if (!container)
-            container = document.querySelector('.' + GRID_CONTAINER);
+            container = document.querySelector('.' + FG_LAYOUT);
         else if (typeof jQuery === "object" && container instanceof jQuery)
             container = container[0];
         // 设置编号
-        var index = GRID_CONTAINER + cache.count++;
-        if (!container.getAttribute(GRID_CONTAINER_INDEX)) {
-            container.setAttribute(GRID_CONTAINER_INDEX, index);
+        var index = ++cache.count;
+        if (!container.getAttribute(FG_LAYOUT_INDEX)) {
+            container.setAttribute(FG_LAYOUT_INDEX, index);
         }
-        cache[index] = new Grid(options, container, originalData);
+        cache[index] = new Flowgrid(options, container, originalData);
         return cache[index];
     }
 
     // 销毁实例
-    function destroy(grid) {
-        delete cache[grid.opt.container.getAttribute(GRID_CONTAINER_INDEX)];
-        grid.destroy();
-        grid = null;
+    function destroy(flowgrid) {
+        delete cache[flowgrid.opt.container.getAttribute(FG_LAYOUT_INDEX)];
+        flowgrid.destroy();
+        flowgrid = null;
     }
 
     flowgrid = {
-        version: "1.0.5",
+        version: "1.1.0",
         instance: instance,
         destroy: destroy
     };
